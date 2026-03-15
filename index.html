@@ -1,0 +1,139 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Tour du Monde Culturel</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link href="https://fonts.googleapis.com/css2?family=Syne:wght@400;500;600;700&family=Inter:wght@400;500&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="css/style.css" />
+</head>
+<body>
+
+  <!-- LOGIN SCREEN -->
+  <div id="login-screen">
+    <div class="login-box">
+      <div class="login-logo">
+        <svg width="32" height="32" viewBox="0 0 32 32" fill="none" xmlns="http://www.w3.org/2000/svg">
+          <circle cx="16" cy="16" r="15" stroke="#C8F562" stroke-width="1.5"/>
+          <circle cx="16" cy="16" r="6" fill="#C8F562" opacity="0.15" stroke="#C8F562" stroke-width="1"/>
+          <line x1="1" y1="16" x2="31" y2="16" stroke="#C8F562" stroke-width="0.8" opacity="0.5"/>
+          <path d="M16 1 Q22 8 22 16 Q22 24 16 31" stroke="#C8F562" stroke-width="0.8" opacity="0.5" fill="none"/>
+          <path d="M16 1 Q10 8 10 16 Q10 24 16 31" stroke="#C8F562" stroke-width="0.8" opacity="0.5" fill="none"/>
+        </svg>
+      </div>
+      <h1>Tour du Monde<br/>Culturel</h1>
+      <p class="login-sub">Outil de recherche interne</p>
+      <div class="login-form">
+        <input type="password" id="pwd-input" placeholder="Mot de passe" autocomplete="current-password" />
+        <button id="login-btn">Entrer</button>
+      </div>
+      <p class="login-error" id="login-error">Mot de passe incorrect</p>
+    </div>
+  </div>
+
+  <!-- APP -->
+  <div id="app" class="hidden">
+
+    <header>
+      <div class="header-left">
+        <svg width="22" height="22" viewBox="0 0 32 32" fill="none" xmlns="http://www.w3.org/2000/svg">
+          <circle cx="16" cy="16" r="15" stroke="#C8F562" stroke-width="1.5"/>
+          <line x1="1" y1="16" x2="31" y2="16" stroke="#C8F562" stroke-width="0.8" opacity="0.6"/>
+          <path d="M16 1 Q22 8 22 16 Q22 24 16 31" stroke="#C8F562" stroke-width="0.8" opacity="0.6" fill="none"/>
+          <path d="M16 1 Q10 8 10 16 Q10 24 16 31" stroke="#C8F562" stroke-width="0.8" opacity="0.6" fill="none"/>
+        </svg>
+        <span class="header-title">Tour du Monde Culturel</span>
+      </div>
+      <div class="header-right">
+        <div class="stat-pill pill-todo"><span class="dot dot-todo"></span><span id="cnt-todo">0</span> à faire</div>
+        <div class="stat-pill pill-wip"><span class="dot dot-wip"></span><span id="cnt-wip">0</span> en cours</div>
+        <div class="stat-pill pill-done"><span class="dot dot-done"></span><span id="cnt-done">0</span> publiés</div>
+        <button class="logout-btn" id="logout-btn">Déconnexion</button>
+      </div>
+    </header>
+
+    <main>
+      <div id="map-wrapper">
+        <svg id="map-svg" viewBox="0 0 1000 500" xmlns="http://www.w3.org/2000/svg">
+          <g id="countries-group"></g>
+        </svg>
+        <div id="tooltip">
+          <div class="tt-name" id="tt-name"></div>
+          <div class="tt-status" id="tt-status"></div>
+          <div class="tt-note" id="tt-note"></div>
+        </div>
+      </div>
+
+      <div id="legend">
+        <div class="legend-item"><span class="dot dot-todo"></span> À faire</div>
+        <div class="legend-item"><span class="dot dot-wip"></span> En cours</div>
+        <div class="legend-item"><span class="dot dot-done"></span> Publié</div>
+        <span class="legend-hint">Cliquez sur un pays pour annoter</span>
+      </div>
+    </main>
+
+    <!-- SIDE PANEL -->
+    <div id="overlay" class="hidden"></div>
+    <div id="panel" class="hidden">
+      <div class="panel-header">
+        <div class="panel-country-name" id="panel-name"></div>
+        <button class="panel-close" id="panel-close">×</button>
+      </div>
+
+      <div class="panel-section">
+        <label class="panel-label">Statut</label>
+        <div class="status-row">
+          <button class="status-btn s-todo" data-s="todo">À faire</button>
+          <button class="status-btn s-wip" data-s="wip">En cours</button>
+          <button class="status-btn s-done" data-s="done">Publié</button>
+        </div>
+      </div>
+
+      <div class="panel-section">
+        <label class="panel-label">Artiste / Angle</label>
+        <input type="text" id="panel-artist" class="panel-input" placeholder="Nom de l'artiste, groupe..." />
+      </div>
+
+      <div class="panel-section">
+        <label class="panel-label">Notes de recherche</label>
+        <textarea id="panel-note" class="panel-textarea" placeholder="Sources, idées narratives, contacts, liens..."></textarea>
+      </div>
+
+      <div class="panel-section">
+        <label class="panel-label">Liens utiles</label>
+        <div id="links-list"></div>
+        <div class="add-link-row">
+          <input type="url" id="link-input" class="panel-input" placeholder="https://..." />
+          <button id="add-link-btn">Ajouter</button>
+        </div>
+      </div>
+
+      <div class="panel-footer">
+        <div class="last-edit" id="last-edit"></div>
+        <button class="save-btn" id="panel-save">Enregistrer</button>
+      </div>
+    </div>
+
+    <!-- COUNTRY LIST -->
+    <div id="list-bar">
+      <button id="list-toggle-btn">
+        <svg width="14" height="14" viewBox="0 0 14 14" fill="none"><rect x="1" y="3" width="12" height="1.2" rx="0.6" fill="currentColor"/><rect x="1" y="6.4" width="12" height="1.2" rx="0.6" fill="currentColor"/><rect x="1" y="9.8" width="12" height="1.2" rx="0.6" fill="currentColor"/></svg>
+        Pays annotés
+      </button>
+    </div>
+
+    <div id="list-drawer" class="hidden">
+      <div class="drawer-header">
+        <span>Pays annotés</span>
+        <button id="drawer-close">×</button>
+      </div>
+      <div id="drawer-body"></div>
+    </div>
+
+  </div>
+
+  <!-- Firebase + App Script -->
+  <script type="module" src="js/app.js"></script>
+</body>
+</html>
