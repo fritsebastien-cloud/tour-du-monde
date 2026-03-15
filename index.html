@@ -5,21 +5,24 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
   <title>Tour du Monde Culturel</title>
   <link rel="preconnect" href="https://fonts.googleapis.com">
-  <link href="https://fonts.googleapis.com/css2?family=Syne:wght@400;500;600;700&family=Inter:wght@400;500&display=swap" rel="stylesheet">
+  <link href="https://fonts.googleapis.com/css2?family=Syne:wght@400;500;600;700&family=Inter:wght@400;500;600&display=swap" rel="stylesheet">
   <link rel="stylesheet" href="css/style.css" />
 </head>
 <body>
 
-  <!-- LOGIN SCREEN -->
+  <!-- LOGIN -->
   <div id="login-screen">
+    <div class="login-bg"></div>
     <div class="login-box">
       <div class="login-logo">
-        <svg width="32" height="32" viewBox="0 0 32 32" fill="none" xmlns="http://www.w3.org/2000/svg">
-          <circle cx="16" cy="16" r="15" stroke="#C8F562" stroke-width="1.5"/>
-          <circle cx="16" cy="16" r="6" fill="#C8F562" opacity="0.15" stroke="#C8F562" stroke-width="1"/>
-          <line x1="1" y1="16" x2="31" y2="16" stroke="#C8F562" stroke-width="0.8" opacity="0.5"/>
-          <path d="M16 1 Q22 8 22 16 Q22 24 16 31" stroke="#C8F562" stroke-width="0.8" opacity="0.5" fill="none"/>
-          <path d="M16 1 Q10 8 10 16 Q10 24 16 31" stroke="#C8F562" stroke-width="0.8" opacity="0.5" fill="none"/>
+        <svg width="38" height="38" viewBox="0 0 38 38" fill="none">
+          <circle cx="19" cy="19" r="17.5" stroke="#C8F562" stroke-width="1.2"/>
+          <circle cx="19" cy="19" r="7" fill="none" stroke="#C8F562" stroke-width="1"/>
+          <line x1="1.5" y1="19" x2="36.5" y2="19" stroke="#C8F562" stroke-width="0.7" opacity="0.5"/>
+          <path d="M19 1.5 Q25.5 9.5 25.5 19 Q25.5 28.5 19 36.5" stroke="#C8F562" stroke-width="0.7" opacity="0.5" fill="none"/>
+          <path d="M19 1.5 Q12.5 9.5 12.5 19 Q12.5 28.5 19 36.5" stroke="#C8F562" stroke-width="0.7" opacity="0.5" fill="none"/>
+          <line x1="3" y1="12" x2="35" y2="12" stroke="#C8F562" stroke-width="0.5" opacity="0.25"/>
+          <line x1="3" y1="26" x2="35" y2="26" stroke="#C8F562" stroke-width="0.5" opacity="0.25"/>
         </svg>
       </div>
       <h1>Tour du Monde<br/>Culturel</h1>
@@ -37,27 +40,40 @@
 
     <header>
       <div class="header-left">
-        <svg width="22" height="22" viewBox="0 0 32 32" fill="none" xmlns="http://www.w3.org/2000/svg">
-          <circle cx="16" cy="16" r="15" stroke="#C8F562" stroke-width="1.5"/>
-          <line x1="1" y1="16" x2="31" y2="16" stroke="#C8F562" stroke-width="0.8" opacity="0.6"/>
-          <path d="M16 1 Q22 8 22 16 Q22 24 16 31" stroke="#C8F562" stroke-width="0.8" opacity="0.6" fill="none"/>
-          <path d="M16 1 Q10 8 10 16 Q10 24 16 31" stroke="#C8F562" stroke-width="0.8" opacity="0.6" fill="none"/>
+        <svg width="20" height="20" viewBox="0 0 38 38" fill="none">
+          <circle cx="19" cy="19" r="17.5" stroke="#C8F562" stroke-width="1.5"/>
+          <line x1="1.5" y1="19" x2="36.5" y2="19" stroke="#C8F562" stroke-width="0.8" opacity="0.6"/>
+          <path d="M19 1.5 Q25.5 9.5 25.5 19 Q25.5 28.5 19 36.5" stroke="#C8F562" stroke-width="0.8" opacity="0.6" fill="none"/>
+          <path d="M19 1.5 Q12.5 9.5 12.5 19 Q12.5 28.5 19 36.5" stroke="#C8F562" stroke-width="0.8" opacity="0.6" fill="none"/>
         </svg>
         <span class="header-title">Tour du Monde Culturel</span>
       </div>
       <div class="header-right">
-        <div class="stat-pill pill-todo"><span class="dot dot-todo"></span><span id="cnt-todo">0</span> à faire</div>
-        <div class="stat-pill pill-wip"><span class="dot dot-wip"></span><span id="cnt-wip">0</span> en cours</div>
-        <div class="stat-pill pill-done"><span class="dot dot-done"></span><span id="cnt-done">0</span> publiés</div>
+        <div class="stat-pill"><span class="dot dot-todo"></span><span id="cnt-todo">0</span>&nbsp;à faire</div>
+        <div class="stat-pill"><span class="dot dot-wip"></span><span id="cnt-wip">0</span>&nbsp;en cours</div>
+        <div class="stat-pill"><span class="dot dot-done"></span><span id="cnt-done">0</span>&nbsp;publiés</div>
         <button class="logout-btn" id="logout-btn">Déconnexion</button>
       </div>
     </header>
 
     <main>
       <div id="map-wrapper">
-        <svg id="map-svg" viewBox="0 0 1000 500" xmlns="http://www.w3.org/2000/svg">
+        <svg id="map-svg" xmlns="http://www.w3.org/2000/svg">
           <g id="countries-group"></g>
         </svg>
+
+        <div id="map-loading">
+          <div class="loading-spinner"></div>
+          <span class="loading-text">Chargement de la carte</span>
+        </div>
+
+        <!-- Zoom controls -->
+        <div id="zoom-controls">
+          <button id="zoom-in" title="Zoomer">+</button>
+          <button id="zoom-out" title="Dézoomer">−</button>
+          <button id="zoom-reset" title="Réinitialiser">↺</button>
+        </div>
+
         <div id="tooltip">
           <div class="tt-name" id="tt-name"></div>
           <div class="tt-status" id="tt-status"></div>
@@ -66,10 +82,10 @@
       </div>
 
       <div id="legend">
-        <div class="legend-item"><span class="dot dot-todo"></span> À faire</div>
-        <div class="legend-item"><span class="dot dot-wip"></span> En cours</div>
-        <div class="legend-item"><span class="dot dot-done"></span> Publié</div>
-        <span class="legend-hint">Cliquez sur un pays pour annoter</span>
+        <div class="legend-item"><span class="dot dot-todo"></span>À faire</div>
+        <div class="legend-item"><span class="dot dot-wip"></span>En cours</div>
+        <div class="legend-item"><span class="dot dot-done"></span>Publié</div>
+        <span class="legend-hint">Scroll pour zoomer · Clic pour annoter</span>
       </div>
     </main>
 
@@ -80,7 +96,6 @@
         <div class="panel-country-name" id="panel-name"></div>
         <button class="panel-close" id="panel-close">×</button>
       </div>
-
       <div class="panel-section">
         <label class="panel-label">Statut</label>
         <div class="status-row">
@@ -89,17 +104,14 @@
           <button class="status-btn s-done" data-s="done">Publié</button>
         </div>
       </div>
-
       <div class="panel-section">
         <label class="panel-label">Artiste / Angle</label>
         <input type="text" id="panel-artist" class="panel-input" placeholder="Nom de l'artiste, groupe..." />
       </div>
-
       <div class="panel-section">
         <label class="panel-label">Notes de recherche</label>
         <textarea id="panel-note" class="panel-textarea" placeholder="Sources, idées narratives, contacts, liens..."></textarea>
       </div>
-
       <div class="panel-section">
         <label class="panel-label">Liens utiles</label>
         <div id="links-list"></div>
@@ -108,21 +120,23 @@
           <button id="add-link-btn">Ajouter</button>
         </div>
       </div>
-
       <div class="panel-footer">
         <div class="last-edit" id="last-edit"></div>
         <button class="save-btn" id="panel-save">Enregistrer</button>
       </div>
     </div>
 
-    <!-- COUNTRY LIST -->
+    <!-- DRAWER -->
     <div id="list-bar">
       <button id="list-toggle-btn">
-        <svg width="14" height="14" viewBox="0 0 14 14" fill="none"><rect x="1" y="3" width="12" height="1.2" rx="0.6" fill="currentColor"/><rect x="1" y="6.4" width="12" height="1.2" rx="0.6" fill="currentColor"/><rect x="1" y="9.8" width="12" height="1.2" rx="0.6" fill="currentColor"/></svg>
+        <svg width="13" height="13" viewBox="0 0 13 13" fill="none">
+          <rect x="0.5" y="2.5" width="12" height="1.2" rx="0.6" fill="currentColor"/>
+          <rect x="0.5" y="5.9" width="12" height="1.2" rx="0.6" fill="currentColor"/>
+          <rect x="0.5" y="9.3" width="12" height="1.2" rx="0.6" fill="currentColor"/>
+        </svg>
         Pays annotés
       </button>
     </div>
-
     <div id="list-drawer" class="hidden">
       <div class="drawer-header">
         <span>Pays annotés</span>
@@ -133,7 +147,6 @@
 
   </div>
 
-  <!-- Firebase + App Script -->
   <script type="module" src="js/app.js"></script>
 </body>
 </html>
