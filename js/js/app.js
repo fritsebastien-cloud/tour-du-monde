@@ -15,17 +15,34 @@ const PASSWORD = "tourdumond2025";
 const firebaseApp = initializeApp(FIREBASE_CONFIG);
 const db = getDatabase(firebaseApp);
 
+// ── Colors (hardcoded, no CSS variable reading) ────────────────────────────────
+const COLORS = {
+  light: {
+    ocean: "#c8dff0", land: "#d8d8d2", landHover: "#b0b0a8",
+    wip: "#f5a623", wipHover: "#d4891a", done: "#4caf7d", doneHover: "#3a9068",
+    stroke: "#ffffff", graticule: "rgba(0,0,0,0.05)", sphere: "rgba(0,0,0,0.08)"
+  },
+  dark: {
+    ocean: "#0e1e35", land: "#2a2e28", landHover: "#3e4238",
+    wip: "#7a4e0a", wipHover: "#9a6510", done: "#1a4d2c", doneHover: "#245e38",
+    stroke: "#0f1117", graticule: "rgba(255,255,255,0.04)", sphere: "rgba(255,255,255,0.06)"
+  }
+};
+
+let isDark = localStorage.getItem("tdc_theme") === "dark";
+const c = () => isDark ? COLORS.dark : COLORS.light;
+
 let allData = {};
 let selectedId = null;
 let selectedName = null;
 let currentStatus = "todo";
 let currentLinks = [];
 let d3lib = null;
+const featureGeoms = {};
 
 const statusLabel = { todo: "À faire", wip: "En cours", done: "Publié" };
-const statusColor = { todo: "#b0b0a8", wip: "#f5a623", done: "#4caf7d" };
+const statusDot   = { todo: "#c0c0b8", wip: "#f5a623", done: "#4caf7d" };
 
-// Noms complets — codes ISO 3166-1 numérique
 const NAME_MAP = {
   "004":"Afghanistan","008":"Albanie","012":"Algérie","020":"Andorre","024":"Angola",
   "028":"Antigua-et-Barbuda","032":"Argentine","036":"Australie","040":"Autriche",
@@ -55,43 +72,55 @@ const NAME_MAP = {
   "516":"Namibie","524":"Népal","528":"Pays-Bas","554":"Nouvelle-Zélande",
   "558":"Nicaragua","562":"Niger","566":"Nigéria","578":"Norvège","512":"Oman",
   "586":"Pakistan","591":"Panama","598":"Papouasie-Nvl-Guinée","600":"Paraguay",
-  "604":"Pérou","608":"Philippines","616":"Pologne","620":"Portugal","630":"Porto Rico",
+  "604":"Pérou","608":"Philippines","616":"Pologne","620":"Portugal",
   "634":"Qatar","642":"Roumanie","643":"Russie","646":"Rwanda",
   "682":"Arabie saoudite","686":"Sénégal","688":"Serbie","694":"Sierra Leone",
-  "706":"Somalie","710":"Afrique du Sud","716":"Zimbabwe","720":"Yémen du Sud",
-  "724":"Espagne","728":"Soudan du Sud","729":"Soudan","740":"Suriname",
-  "752":"Suède","756":"Suisse","760":"Syrie","762":"Tadjikistan","764":"Thaïlande",
-  "768":"Togo","780":"Trinité-et-Tobago","788":"Tunisie","792":"Turquie",
-  "795":"Turkménistan","800":"Ouganda","804":"Ukraine","784":"Émirats arabes unis",
-  "826":"Royaume-Uni","840":"États-Unis","858":"Uruguay","860":"Ouzbékistan",
-  "862":"Venezuela","704":"Viêt Nam","887":"Yémen","894":"Zambie",
-  "051":"Arménie","498":"Moldavie","807":"Macédoine du Nord","275":"Palestine",
-  "702":"Singapour","090":"Îles Salomon","548":"Vanuatu","242":"Fidji",
-  "583":"Micronésie","585":"Palaos","584":"Îles Marshall","798":"Tuvalu",
-  "520":"Nauru","776":"Tonga","882":"Samoa","703":"Slovaquie","705":"Slovénie",
-  "191":"Croatie","776":"Tonga","010":"Antarctique","158":"Taïwan",
-  "334":"Heard-et-Îles McDonald","238":"Îles Malouines","654":"Sainte-Hélène",
-  "074":"Île Bouvet","036":"Australie","316":"Guam","630":"Porto Rico",
+  "703":"Slovaquie","705":"Slovénie","706":"Somalie","710":"Afrique du Sud",
+  "716":"Zimbabwe","724":"Espagne","728":"Soudan du Sud","729":"Soudan",
+  "740":"Suriname","752":"Suède","756":"Suisse","760":"Syrie","762":"Tadjikistan",
+  "764":"Thaïlande","768":"Togo","780":"Trinité-et-Tobago","788":"Tunisie",
+  "792":"Turquie","795":"Turkménistan","800":"Ouganda","804":"Ukraine",
+  "784":"Émirats arabes unis","826":"Royaume-Uni","840":"États-Unis",
+  "858":"Uruguay","860":"Ouzbékistan","862":"Venezuela","704":"Viêt Nam",
+  "887":"Yémen","894":"Zambie","051":"Arménie","498":"Moldavie",
+  "807":"Macédoine du Nord","702":"Singapour","090":"Îles Salomon",
+  "548":"Vanuatu","242":"Fidji","776":"Tonga","882":"Samoa",
+  "158":"Taïwan","630":"Porto Rico","275":"Palestine","238":"Îles Malouines"
 };
 
 // ── Login ─────────────────────────────────────────────────────────────────────
 const loginScreen = document.getElementById("login-screen");
 const appEl = document.getElementById("app");
-const pwdInput = document.getElementById("pwd-input");
+
+function applyTheme() {
+  document.body.classList.toggle("dark", isDark);
+  document.getElementById("icon-sun").classList.toggle("hidden", isDark);
+  document.getElementById("icon-moon").classList.toggle("hidden", !isDark);
+  if (d3lib) redrawMapColors();
+}
+applyTheme();
+
+document.getElementById("theme-btn").addEventListener("click", () => {
+  isDark = !isDark;
+  localStorage.setItem("tdc_theme", isDark ? "dark" : "light");
+  applyTheme();
+});
 
 function tryLogin() {
-  if (pwdInput.value === PASSWORD) {
+  if (document.getElementById("pwd-input").value === PASSWORD) {
     sessionStorage.setItem("tdc_auth", "1");
     loginScreen.style.display = "none";
     appEl.classList.remove("hidden");
     initApp();
   } else {
     document.getElementById("login-error").classList.add("show");
-    pwdInput.value = ""; pwdInput.focus();
+    document.getElementById("pwd-input").value = "";
+    document.getElementById("pwd-input").focus();
   }
 }
 document.getElementById("login-btn").addEventListener("click", tryLogin);
-pwdInput.addEventListener("keydown", e => { if (e.key === "Enter") tryLogin(); });
+document.getElementById("pwd-input").addEventListener("keydown", e => { if (e.key === "Enter") tryLogin(); });
+
 if (sessionStorage.getItem("tdc_auth") === "1") {
   loginScreen.style.display = "none";
   appEl.classList.remove("hidden");
@@ -99,22 +128,6 @@ if (sessionStorage.getItem("tdc_auth") === "1") {
 }
 document.getElementById("logout-btn").addEventListener("click", () => {
   sessionStorage.removeItem("tdc_auth"); location.reload();
-});
-
-// ── Theme ─────────────────────────────────────────────────────────────────────
-let isDark = localStorage.getItem("tdc_theme") === "dark";
-function applyTheme() {
-  document.documentElement.setAttribute("data-theme", isDark ? "dark" : "light");
-  document.getElementById("icon-sun").style.display = isDark ? "none" : "block";
-  document.getElementById("icon-moon").style.display = isDark ? "block" : "none";
-}
-applyTheme();
-document.getElementById("theme-btn").addEventListener("click", () => {
-  isDark = !isDark;
-  localStorage.setItem("tdc_theme", isDark ? "dark" : "light");
-  applyTheme();
-  applyColors();
-  updateOcean();
 });
 
 // ── Firebase ──────────────────────────────────────────────────────────────────
@@ -127,9 +140,15 @@ function listenToData() {
 }
 
 // ── Map ───────────────────────────────────────────────────────────────────────
-let svgSel, mainG, countriesG, W, H;
-// Store path data per feature for silhouette rendering
-const featurePaths = {};
+let svgEl, zoomBehavior;
+
+function getFill(id, hover) {
+  const s = allData[id]?.status;
+  if (!s || s === "todo") return hover ? c().landHover : c().land;
+  if (s === "wip") return hover ? c().wipHover : c().wip;
+  if (s === "done") return hover ? c().doneHover : c().done;
+  return c().land;
+}
 
 async function loadMap() {
   const [d3, topo, world] = await Promise.all([
@@ -140,150 +159,108 @@ async function loadMap() {
   d3lib = d3;
 
   const wrapper = document.getElementById("map-wrapper");
-  W = wrapper.clientWidth || 1200;
-  H = wrapper.clientHeight || 620;
+  const W = wrapper.clientWidth || 1200;
+  const H = wrapper.clientHeight || 620;
 
-  svgSel = d3.select("#map-svg").attr("viewBox", `0 0 ${W} ${H}`);
+  svgEl = d3.select("#map-svg").attr("viewBox", `0 0 ${W} ${H}`);
 
-  // Ocean background
-  const oceanRect = svgSel.append("rect")
-    .attr("id", "ocean-rect")
+  // Ocean
+  svgEl.append("rect").attr("id","ocean-bg")
     .attr("width", W).attr("height", H)
-    .attr("fill", getComputedStyle(document.documentElement).getPropertyValue("--ocean").trim());
+    .attr("fill", c().ocean);
 
-  const projection = d3.geoNaturalEarth1()
+  const proj = d3.geoNaturalEarth1()
     .scale(W / 6.2)
     .translate([W / 2, H / 2]);
+  const path = d3.geoPath().projection(proj);
 
-  const path = d3.geoPath().projection(projection);
-
-  mainG = svgSel.append("g").attr("id", "main-g");
+  const g = svgEl.append("g").attr("id","map-g");
 
   // Graticule
-  const gratG = mainG.append("g");
-  gratG.append("path")
-    .datum(d3.geoGraticule()())
-    .attr("d", path)
-    .attr("fill", "none")
-    .attr("stroke", getComputedStyle(document.documentElement).getPropertyValue("--graticule").trim())
-    .attr("stroke-width", 0.4)
-    .attr("id", "graticule-path");
+  g.append("path").datum(d3.geoGraticule()())
+    .attr("id","grat").attr("d", path)
+    .attr("fill","none").attr("stroke", c().graticule).attr("stroke-width", 0.4);
 
-  gratG.append("path")
-    .datum({ type: "Sphere" })
-    .attr("d", path)
-    .attr("fill", "none")
-    .attr("stroke", getComputedStyle(document.documentElement).getPropertyValue("--sphere").trim())
-    .attr("stroke-width", 1)
-    .attr("id", "sphere-path");
+  g.append("path").datum({type:"Sphere"})
+    .attr("id","sphere").attr("d", path)
+    .attr("fill","none").attr("stroke", c().sphere).attr("stroke-width", 1);
 
-  countriesG = mainG.append("g").attr("id", "countries-group");
+  const cg = g.append("g").attr("id","cg");
 
-  const countries = topo.feature(world, world.objects.countries);
-
-  countries.features.forEach(f => {
-    const id = String(f.id).padStart(3, "0");
+  topo.feature(world, world.objects.countries).features.forEach(f => {
+    const id = String(f.id).padStart(3,"0");
     const name = NAME_MAP[id];
     if (!name) return;
     const d = path(f.geometry);
     if (!d) return;
-
-    featurePaths[id] = f.geometry;
-
-    countriesG.append("path")
+    featureGeoms[id] = f.geometry;
+    cg.append("path")
       .attr("d", d)
       .attr("data-id", id)
-      .attr("data-name", name)
-      .attr("fill", getLandColor(id, false))
-      .attr("stroke", getComputedStyle(document.documentElement).getPropertyValue("--land-stroke").trim())
+      .attr("fill", getFill(id, false))
+      .attr("stroke", c().stroke)
       .attr("stroke-width", 0.4)
-      .style("cursor", "pointer")
-      .style("transition", "fill 0.15s")
-      .on("mouseenter", function(event) {
-        showTooltip(event, id, name);
-        if (id !== selectedId) {
-          d3.select(this).attr("fill", getLandColor(id, true));
-        }
+      .style("cursor","pointer")
+      .on("mouseenter", function(ev) {
+        showTooltip(ev, id, name);
+        if (id !== selectedId) d3.select(this).attr("fill", getFill(id, true));
       })
       .on("mousemove", moveTooltip)
       .on("mouseleave", function() {
         hideTooltip();
-        if (id !== selectedId) d3.select(this).attr("fill", getLandColor(id, false));
+        if (id !== selectedId) d3.select(this).attr("fill", getFill(id, false));
       })
-      .on("click", () => openPanel(id, name, path, projection));
+      .on("click", () => openPanel(id, name, path));
   });
 
-  // Infinite horizontal zoom/pan
-  const zoom = d3.zoom()
-    .scaleExtent([0.9, 15])
-    .on("zoom", event => {
-      const t = event.transform;
-      // Wrap horizontally: allow infinite panning
-      const mapWidth = W;
-      const tx = ((t.x % (mapWidth * t.k)) + mapWidth * t.k) % (mapWidth * t.k);
-      mainG.attr("transform", `translate(${t.x},${t.y}) scale(${t.k})`);
-    });
-
-  svgSel.call(zoom).on("dblclick.zoom", null);
+  // Zoom
+  zoomBehavior = d3.zoom().scaleExtent([0.85, 16])
+    .on("zoom", ev => g.attr("transform", ev.transform));
+  svgEl.call(zoomBehavior).on("dblclick.zoom", null);
 
   document.getElementById("zoom-in").addEventListener("click", () =>
-    svgSel.transition().duration(250).call(zoom.scaleBy, 1.6));
+    svgEl.transition().duration(250).call(zoomBehavior.scaleBy, 1.6));
   document.getElementById("zoom-out").addEventListener("click", () =>
-    svgSel.transition().duration(250).call(zoom.scaleBy, 0.625));
+    svgEl.transition().duration(250).call(zoomBehavior.scaleBy, 0.625));
   document.getElementById("zoom-reset").addEventListener("click", () =>
-    svgSel.transition().duration(400).call(zoom.transform, d3.zoomIdentity));
+    svgEl.transition().duration(400).call(zoomBehavior.transform, d3.zoomIdentity));
 
-  document.getElementById("map-loading").remove();
+  document.getElementById("map-loading").style.display = "none";
   applyColors();
-
-  // Shimmer every 20s
   startShimmer();
-}
-
-function getLandColor(id, hover) {
-  const s = allData[id]?.status;
-  const cs = getComputedStyle(document.documentElement);
-  if (!s || s === "todo") return cs.getPropertyValue(hover ? "--land-hover" : "--land").trim();
-  if (s === "wip") return cs.getPropertyValue(hover ? "--land-wip-h" : "--land-wip").trim();
-  if (s === "done") return cs.getPropertyValue(hover ? "--land-done-h" : "--land-done").trim();
-  return cs.getPropertyValue("--land").trim();
 }
 
 function applyColors() {
   document.querySelectorAll("[data-id]").forEach(el => {
     const id = el.getAttribute("data-id");
-    el.setAttribute("fill", getLandColor(id, false));
-    const cs = getComputedStyle(document.documentElement);
-    el.setAttribute("stroke", id === selectedId ? "#f5a623" : cs.getPropertyValue("--land-stroke").trim());
+    el.setAttribute("fill", getFill(id, false));
+    el.setAttribute("stroke", id === selectedId ? "#f5a623" : c().stroke);
     el.setAttribute("stroke-width", id === selectedId ? "1.5" : "0.4");
   });
 }
 
-function updateOcean() {
-  const cs = getComputedStyle(document.documentElement);
-  document.getElementById("ocean-rect")?.setAttribute("fill", cs.getPropertyValue("--ocean").trim());
-  document.getElementById("graticule-path")?.setAttribute("stroke", cs.getPropertyValue("--graticule").trim());
-  document.getElementById("sphere-path")?.setAttribute("stroke", cs.getPropertyValue("--sphere").trim());
-  document.querySelectorAll("[data-id]").forEach(el => {
-    el.setAttribute("stroke", cs.getPropertyValue("--land-stroke").trim());
-  });
+function redrawMapColors() {
+  document.getElementById("ocean-bg")?.setAttribute("fill", c().ocean);
+  document.getElementById("grat")?.setAttribute("stroke", c().graticule);
+  document.getElementById("sphere")?.setAttribute("stroke", c().sphere);
+  document.getElementById("map-loading").style.background = isDark ? "#0e1e35" : "#c8dff0";
+  applyColors();
 }
 
 function updateStats() {
   const v = Object.values(allData);
   document.getElementById("cnt-todo").textContent = v.filter(x => x.status === "todo").length;
-  document.getElementById("cnt-wip").textContent = v.filter(x => x.status === "wip").length;
+  document.getElementById("cnt-wip").textContent  = v.filter(x => x.status === "wip").length;
   document.getElementById("cnt-done").textContent = v.filter(x => x.status === "done").length;
 }
 
 // ── Shimmer ───────────────────────────────────────────────────────────────────
 function startShimmer() {
   setInterval(() => {
-    const wrapper = document.getElementById("map-wrapper");
     const el = document.createElement("div");
-    el.className = "map-shimmer";
-    wrapper.appendChild(el);
-    setTimeout(() => el.remove(), 1400);
+    el.className = "shimmer-el";
+    document.getElementById("map-wrapper").appendChild(el);
+    setTimeout(() => el.remove(), 1500);
   }, 20000);
 }
 
@@ -291,45 +268,45 @@ function startShimmer() {
 const tt = document.getElementById("tooltip");
 const mapWrap = document.getElementById("map-wrapper");
 
-function showTooltip(event, id, name) {
-  const entry = allData[id];
+function showTooltip(ev, id, name) {
+  const e = allData[id];
   document.getElementById("tt-name").textContent = name;
-  const meta = [];
-  if (entry?.status) meta.push(statusLabel[entry.status]);
-  if (entry?.artist) meta.push(entry.artist);
-  if (entry?.category) meta.push(entry.category);
-  document.getElementById("tt-meta").textContent = meta.join(" · ") || "Cliquer pour annoter";
+  const parts = [];
+  if (e?.status) parts.push(statusLabel[e.status]);
+  if (e?.artist) parts.push(e.artist);
+  if (e?.category) parts.push(e.category);
+  document.getElementById("tt-meta").textContent = parts.join(" · ") || "Cliquer pour annoter";
   tt.style.opacity = "1";
-  moveTooltip(event);
+  moveTooltip(ev);
 }
-function moveTooltip(event) {
+function moveTooltip(ev) {
   const r = mapWrap.getBoundingClientRect();
-  let x = event.clientX - r.left + 14, y = event.clientY - r.top + 14;
-  if (x + 220 > r.width) x = event.clientX - r.left - 230;
-  if (y + 70 > r.height) y = event.clientY - r.top - 60;
+  let x = ev.clientX - r.left + 14, y = ev.clientY - r.top + 14;
+  if (x + 210 > r.width)  x = ev.clientX - r.left - 220;
+  if (y + 60  > r.height) y = ev.clientY - r.top  - 55;
   tt.style.left = x + "px"; tt.style.top = y + "px";
 }
 function hideTooltip() { tt.style.opacity = "0"; }
 
-// ── Country silhouette in panel ───────────────────────────────────────────────
+// ── Country silhouette ────────────────────────────────────────────────────────
 function renderSilhouette(id) {
-  const svgEl = document.getElementById("panel-shape");
-  svgEl.innerHTML = "";
-  if (!d3lib || !featurePaths[id]) return;
-
-  const size = 64;
-  const proj = d3lib.geoMercator().fitSize([size, size], { type: "Feature", geometry: featurePaths[id] });
-  const pathFn = d3lib.geoPath().projection(proj);
-  const d = pathFn({ type: "Feature", geometry: featurePaths[id] });
-  if (!d) return;
-
-  const ns = "http://www.w3.org/2000/svg";
-  const path = document.createElementNS(ns, "path");
-  path.setAttribute("d", d);
-  const s = allData[id]?.status;
-  path.setAttribute("fill", s === "wip" ? "#f5a623" : s === "done" ? "#4caf7d" : getComputedStyle(document.documentElement).getPropertyValue("--land-hover").trim());
-  path.setAttribute("opacity", "0.7");
-  svgEl.appendChild(path);
+  const el = document.getElementById("panel-shape");
+  el.innerHTML = "";
+  if (!d3lib || !featureGeoms[id]) return;
+  try {
+    const size = 56;
+    const feat = { type: "Feature", geometry: featureGeoms[id] };
+    const p = d3lib.geoMercator().fitSize([size, size], feat);
+    const pf = d3lib.geoPath().projection(p);
+    const d = pf(feat);
+    if (!d) return;
+    const path = document.createElementNS("http://www.w3.org/2000/svg", "path");
+    path.setAttribute("d", d);
+    const s = allData[id]?.status;
+    path.setAttribute("fill", s === "wip" ? "#f5a623" : s === "done" ? "#4caf7d" : (isDark ? "#3e4238" : "#c0c0b8"));
+    path.setAttribute("opacity", "0.75");
+    el.appendChild(path);
+  } catch(e) {}
 }
 
 // ── Panel ─────────────────────────────────────────────────────────────────────
@@ -340,36 +317,36 @@ function openPanel(id, name) {
   selectedId = id; selectedName = name;
   const entry = allData[id] || {};
   document.getElementById("panel-name").textContent = name;
-  document.getElementById("panel-code").textContent = "Code ISO: " + id;
+  document.getElementById("panel-status-label").textContent = statusLabel[entry.status || "todo"];
   document.getElementById("panel-artist").value = entry.artist || "";
   document.getElementById("panel-note").value = entry.note || "";
   document.getElementById("panel-category").value = entry.category || "";
   currentStatus = entry.status || "todo";
   currentLinks = Array.isArray(entry.links) ? [...entry.links] : [];
-  document.querySelectorAll(".status-btn").forEach(b => b.classList.toggle("active", b.dataset.s === currentStatus));
+  document.querySelectorAll(".sbtn").forEach(b => b.classList.toggle("active", b.dataset.s === currentStatus));
   renderLinks();
   renderSilhouette(id);
   document.getElementById("last-edit").textContent = entry.editedAt
-    ? "Modifié le " + new Date(entry.editedAt).toLocaleDateString("fr-FR", { day: "numeric", month: "long", hour: "2-digit", minute: "2-digit" }) : "";
+    ? "Modifié le " + new Date(entry.editedAt).toLocaleDateString("fr-FR", { day:"numeric", month:"long", hour:"2-digit", minute:"2-digit" }) : "";
   panel.classList.remove("hidden");
   overlay.classList.remove("hidden");
   applyColors();
 }
 
 function closePanel() {
-  panel.classList.add("hidden");
-  overlay.classList.add("hidden");
+  panel.classList.add("hidden"); overlay.classList.add("hidden");
   selectedId = null; applyColors();
 }
 
 document.getElementById("panel-close").addEventListener("click", closePanel);
 overlay.addEventListener("click", closePanel);
 
-document.querySelectorAll(".status-btn").forEach(btn => {
+document.querySelectorAll(".sbtn").forEach(btn => {
   btn.addEventListener("click", () => {
     currentStatus = btn.dataset.s;
-    document.querySelectorAll(".status-btn").forEach(b => b.classList.remove("active"));
+    document.querySelectorAll(".sbtn").forEach(b => b.classList.remove("active"));
     btn.classList.add("active");
+    document.getElementById("panel-status-label").textContent = statusLabel[currentStatus];
     renderSilhouette(selectedId);
   });
 });
@@ -398,46 +375,47 @@ function renderLinks() {
   const list = document.getElementById("links-list");
   list.innerHTML = currentLinks.map((url, i) => `
     <div class="link-item">
-      <a href="${url}" target="_blank" rel="noopener">${url.replace(/^https?:\/\//, "").substring(0, 48)}</a>
+      <a href="${url}" target="_blank" rel="noopener">${url.replace(/^https?:\/\//,"").substring(0,46)}</a>
       <button class="link-del" data-i="${i}">×</button>
     </div>`).join("");
-  list.querySelectorAll(".link-del").forEach(btn =>
-    btn.addEventListener("click", () => { currentLinks.splice(Number(btn.dataset.i), 1); renderLinks(); }));
+  list.querySelectorAll(".link-del").forEach(b =>
+    b.addEventListener("click", () => { currentLinks.splice(Number(b.dataset.i),1); renderLinks(); }));
 }
 document.getElementById("add-link-btn").addEventListener("click", () => {
-  const input = document.getElementById("link-input");
-  const url = input.value.trim();
+  const inp = document.getElementById("link-input");
+  const url = inp.value.trim();
   if (url && (url.startsWith("http://") || url.startsWith("https://"))) {
-    currentLinks.push(url); renderLinks(); input.value = "";
+    currentLinks.push(url); renderLinks(); inp.value = "";
   }
 });
 
 // ── Drawer ────────────────────────────────────────────────────────────────────
 const drawer = document.getElementById("list-drawer");
 document.getElementById("list-toggle-btn").addEventListener("click", () => {
-  drawer.classList.toggle("hidden"); if (!drawer.classList.contains("hidden")) renderDrawer();
+  drawer.classList.toggle("hidden");
+  if (!drawer.classList.contains("hidden")) renderDrawer();
 });
 document.getElementById("drawer-close").addEventListener("click", () => drawer.classList.add("hidden"));
 
 function renderDrawer() {
   const body = document.getElementById("drawer-body");
-  const entries = Object.entries(allData).filter(([, v]) => v?.name);
+  const entries = Object.entries(allData).filter(([,v]) => v?.name);
   if (!entries.length) {
-    body.innerHTML = '<p style="padding:1rem 1.5rem;font-size:12px;color:var(--text3)">Aucun pays annoté.</p>';
+    body.innerHTML = '<p style="padding:1rem 1.4rem;font-size:12px;color:#bbb">Aucun pays annoté.</p>';
     return;
   }
-  const ord = { done: 0, wip: 1, todo: 2 };
-  entries.sort((a, b) => (ord[a[1].status || "todo"]) - (ord[b[1].status || "todo"]));
-  body.innerHTML = entries.map(([id, v]) => `
-    <div class="drawer-item" data-id="${id}" data-name="${(v.name || id).replace(/"/g, "&quot;")}">
-      <div class="di-dot" style="background:${statusColor[v.status || "todo"]}"></div>
+  const ord = { done:0, wip:1, todo:2 };
+  entries.sort((a,b) => (ord[a[1].status||"todo"]) - (ord[b[1].status||"todo"]));
+  body.innerHTML = entries.map(([id,v]) => `
+    <div class="ditem" data-id="${id}" data-name="${(v.name||id).replace(/"/g,"&quot;")}">
+      <div class="d-dot" style="background:${statusDot[v.status||"todo"]}"></div>
       <div>
-        <div class="di-name">${v.name || id}</div>
-        ${v.artist ? `<div class="di-artist">${v.artist}</div>` : ""}
-        ${v.category ? `<div class="di-category">${v.category}</div>` : ""}
+        <div class="d-name">${v.name||id}</div>
+        ${v.artist ? `<div class="d-artist">${v.artist}</div>` : ""}
+        ${v.category ? `<div class="d-cat">${v.category}</div>` : ""}
       </div>
     </div>`).join("");
-  body.querySelectorAll(".drawer-item").forEach(el =>
+  body.querySelectorAll(".ditem").forEach(el =>
     el.addEventListener("click", () => { drawer.classList.add("hidden"); openPanel(el.dataset.id, el.dataset.name); }));
 }
 
