@@ -59,18 +59,22 @@ const NAME_MAP = {
   "646":"Rwanda","678":"Sao Tomé-et-Principe","686":"Sénégal","694":"Sierra Leone",
   "706":"Somalie","710":"Afrique du Sud","728":"Soudan du Sud","729":"Soudan",
   "748":"Eswatini","768":"Togo","788":"Tunisie","800":"Ouganda","834":"Tanzanie",
-  "894":"Zambie","716":"Zimbabwe","732":"Sahara occidental","238":"Îles Malouines",
+  "894":"Zambie","716":"Zimbabwe","732":"Sahara occidental","654":"Sainte-Hélène",
   // Amérique du Nord et Centrale
   "028":"Antigua-et-Barbuda","044":"Bahamas","084":"Belize","124":"Canada",
   "188":"Costa Rica","192":"Cuba","212":"Dominique","214":"Rép. dominicaine",
   "222":"Salvador","308":"Grenade","320":"Guatemala","332":"Haïti","340":"Honduras",
   "388":"Jamaïque","484":"Mexique","558":"Nicaragua","591":"Panama","630":"Porto Rico",
   "659":"Saint-Kitts-et-Nevis","662":"Sainte-Lucie","670":"Saint-Vincent-et-les-Grenadines",
-  "780":"Trinité-et-Tobago","840":"États-Unis","052":"Barbade",
+  "780":"Trinité-et-Tobago","840":"États-Unis","052":"Barbade","060":"Bermudes",
+  "136":"Îles Caïmans","500":"Montserrat","660":"Anguilla",
+  "652":"Saint-Barthélemy","663":"Saint-Martin","666":"Saint-Pierre-et-Miquelon",
+  "796":"Îles Turques-et-Caïques","850":"Îles Vierges américaines",
+  "092":"Îles Vierges britanniques","316":"Guam","580":"Îles Mariannes du Nord",
   // Amérique du Sud
   "032":"Argentine","068":"Bolivie","076":"Brésil","152":"Chili","170":"Colombie",
   "218":"Équateur","328":"Guyana","600":"Paraguay","604":"Pérou","740":"Suriname",
-  "858":"Uruguay","862":"Venezuela",
+  "858":"Uruguay","862":"Venezuela","238":"Îles Malouines","239":"Géorgie du Sud",
   // Europe
   "008":"Albanie","276":"Allemagne","020":"Andorre","040":"Autriche","112":"Biélorussie",
   "056":"Belgique","070":"Bosnie-Herzégovine","100":"Bulgarie","196":"Chypre",
@@ -81,25 +85,32 @@ const NAME_MAP = {
   "616":"Pologne","620":"Portugal","642":"Roumanie","826":"Royaume-Uni","643":"Russie",
   "688":"Serbie","703":"Slovaquie","705":"Slovénie","724":"Espagne","752":"Suède",
   "756":"Suisse","203":"Tchéquie","804":"Ukraine","051":"Arménie","031":"Azerbaïdjan",
-  "304":"Groenland",
+  "304":"Groenland","234":"Îles Féroé","248":"Îles Åland",
+  "438":"Liechtenstein","492":"Monaco","674":"Saint-Marin","336":"Vatican",
+  "831":"Guernesey","832":"Jersey","833":"Île de Man",
+  "531":"Curaçao","533":"Aruba","534":"Sint Maarten",
   // Asie
   "004":"Afghanistan","050":"Bangladesh","064":"Bhoutan","096":"Brunei","116":"Cambodge",
   "156":"Chine","408":"Corée du Nord","410":"Corée du Sud","368":"Irak","364":"Iran",
   "376":"Israël","392":"Japon","400":"Jordanie","398":"Kazakhstan","417":"Kirghizistan",
-  "296":"Kiribati","414":"Koweït","418":"Laos","422":"Liban","458":"Malaisie",
-  "462":"Maldives","496":"Mongolie","104":"Myanmar","524":"Népal","512":"Oman",
-  "586":"Pakistan","275":"Palestine","608":"Philippines","634":"Qatar","682":"Arabie saoudite",
+  "414":"Koweït","418":"Laos","422":"Liban","458":"Malaisie","462":"Maldives",
+  "496":"Mongolie","104":"Myanmar","524":"Népal","512":"Oman","586":"Pakistan",
+  "275":"Palestine","608":"Philippines","634":"Qatar","682":"Arabie saoudite",
   "702":"Singapour","144":"Sri Lanka","760":"Syrie","158":"Taïwan","762":"Tadjikistan",
   "764":"Thaïlande","626":"Timor oriental","795":"Turkménistan","792":"Turquie",
   "784":"Émirats arabes unis","860":"Ouzbékistan","704":"Viêt Nam","887":"Yémen",
-  "048":"Bahreïn","356":"Inde","360":"Indonésie",
+  "048":"Bahreïn","356":"Inde","360":"Indonésie","344":"Hong Kong","446":"Macao",
+  "086":"Territoire brit. océan Indien",
   // Océanie
-  "036":"Australie","242":"Fidji","584":"Îles Marshall","090":"Îles Salomon",
-  "583":"Micronésie","520":"Nauru","554":"Nouvelle-Zélande","585":"Palaos",
-  "598":"Papouasie-Nvl-Guinée","882":"Samoa","776":"Tonga","798":"Tuvalu",
-  "548":"Vanuatu","258":"Polynésie française","540":"Nouvelle-Calédonie",
-  // Autres
-  "010":"Antarctique","260":"Terres australes françaises"
+  "036":"Australie","242":"Fidji","296":"Kiribati","584":"Îles Marshall",
+  "090":"Îles Salomon","583":"Micronésie","520":"Nauru","554":"Nouvelle-Zélande",
+  "585":"Palaos","598":"Papouasie-Nvl-Guinée","882":"Samoa","016":"Samoa américaines",
+  "776":"Tonga","548":"Vanuatu","258":"Polynésie française","540":"Nouvelle-Calédonie",
+  "184":"Îles Cook","570":"Niué","574":"Île Norfolk","612":"Îles Pitcairn",
+  "876":"Wallis-et-Futuna","690":"Seychelles",
+  // Autres / Territoires
+  "010":"Antarctique","260":"Terres australes françaises",
+  "334":"Îles Heard-et-MacDonald","239":"Géorgie du Sud"
 };
 
 // ── Thème ──────────────────────────────────────────────────────────────────────
@@ -158,7 +169,7 @@ async function loadMap() {
   const [d3mod, topomod, world] = await Promise.all([
     import("https://cdn.jsdelivr.net/npm/d3@7/+esm"),
     import("https://cdn.jsdelivr.net/npm/topojson-client@3/+esm"),
-    fetch("https://cdn.jsdelivr.net/npm/world-atlas@2/countries-110m.json").then(r => r.json())
+    fetch("https://cdn.jsdelivr.net/npm/world-atlas@2/countries-50m.json").then(r => r.json())
   ]);
 
   const wrapper = document.getElementById("map-wrapper");
