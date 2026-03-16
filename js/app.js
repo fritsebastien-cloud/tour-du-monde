@@ -186,23 +186,28 @@ async function loadMap() {
   const g = svg.select("#countries-group");
 
   const projection = d3mod.geoNaturalEarth1()
-    .scale(W / 6.2)
+    .scale(W / 5.2)
     .translate([W / 2, H / 2]);
   const path = d3mod.geoPath().projection(projection);
 
-  // Largeur en pixels du monde entier à l'échelle 1
-  const MAP_W = projection([180, 0])[0] - projection([-180, 0])[0];
+  // Dimensions du monde en pixels à l'échelle 1
+  const MAP_W = projection([180, 0])[0]  - projection([-180, 0])[0];
+  const MAP_H = projection([0, -90])[1]  - projection([0,  90])[1];
 
-  // 3 copies côte à côte pour le défilement infini (-1, 0, +1)
-  const copies = [-1, 0, 1].map(offset => {
-    return g.append("g")
-      .attr("class", "map-copy")
-      .attr("transform", `translate(${offset * MAP_W}, 0)`);
-  });
+  // Grille 3×3 pour bouclage infini horizontal ET vertical
+  const copies = [];
+  for (let row = -1; row <= 1; row++) {
+    for (let col = -1; col <= 1; col++) {
+      copies.push({
+        g: g.append("g").attr("class", "map-copy"),
+        col, row
+      });
+    }
+  }
 
   // Rendu des pays dans chaque copie
   const features = topomod.feature(world, world.objects.countries).features;
-  copies.forEach(copyG => {
+  copies.forEach(({ g: copyG }) => {
     features.forEach(f => {
       const id = String(f.id).padStart(3, "0");
       const name = NAME_MAP[id];
@@ -220,7 +225,6 @@ async function loadMap() {
         .on("mouseenter", function(event) {
           showTooltip(event, id, name);
           const s = allData[id]?.status || "todo";
-          // Hover sur les 3 copies à la fois
           d3mod.selectAll(`[data-id="${id}"]`).attr("fill", mapHover[s] || mapHover.todo);
         })
         .on("mousemove", moveTooltip)
@@ -229,16 +233,18 @@ async function loadMap() {
     });
   });
 
-  // Zoom avec bouclage horizontal infini
+  // Zoom avec bouclage infini horizontal ET vertical
   const zoom = d3mod.zoom()
     .scaleExtent([0.5, 14])
     .on("zoom", event => {
       const { x, y, k } = event.transform;
-      const scaledW = MAP_W * k;
-      // Normalise x pour boucler sans jamais voir de bord
-      const nx = ((x % scaledW) + scaledW) % scaledW;
-      copies.forEach((copyG, i) => {
-        copyG.attr("transform", `translate(${nx + (i - 1) * scaledW}, ${y}) scale(${k})`);
+      const sW = MAP_W * k;
+      const sH = MAP_H * k;
+      const nx = ((x % sW) + sW) % sW;
+      const ny = ((y % sH) + sH) % sH;
+      copies.forEach(({ g: copyG, col, row }) => {
+        copyG.attr("transform",
+          `translate(${nx + col * sW}, ${ny + row * sH}) scale(${k})`);
       });
     });
 
