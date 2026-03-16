@@ -229,17 +229,12 @@ async function loadMap() {
     });
   });
 
-  // Position Y fixe : carte verrouillée verticalement, centrée une fois pour toutes
-  const FIXED_Y = H / 2 - (NORTH_Y + SOUTH_Y) / 2;
+  // Centre vertical du contenu carte (en coordonnées de projection)
+  const MAP_CENTER_Y = (NORTH_Y + SOUTH_Y) / 2;
 
   // Zoom : bouclage horizontal infini, Y totalement verrouillé
   const zoom = d3mod.zoom()
     .scaleExtent([0.5, 14])
-    .filter(event => {
-      // Bloque le scroll vertical sur les événements touch/wheel
-      if (event.type === "wheel") return true;
-      return true;
-    })
     .on("zoom", event => {
       const { x, k } = event.transform;
       const sW = MAP_W * k;
@@ -247,9 +242,11 @@ async function loadMap() {
       // Bouclage horizontal uniquement
       const nx = ((x % sW) + sW) % sW;
 
-      // Y complètement fixe — aucun déplacement vertical possible
+      // Y fixe dynamique : maintient le centre de la carte au centre de l'écran quel que soit k
+      const fixedY = H / 2 - k * MAP_CENTER_Y;
+
       copies.forEach(({ g: copyG, col }) => {
-        copyG.attr("transform", `translate(${nx + col * sW}, ${FIXED_Y}) scale(${k})`);
+        copyG.attr("transform", `translate(${nx + col * sW}, ${fixedY}) scale(${k})`);
       });
     });
 
