@@ -229,6 +229,43 @@ async function loadMap() {
     });
   });
 
+  // Micro-États : trop petits pour être visibles comme polygones → points
+  const MICROSTATES = [
+    { id:"492", lon:7.4167,   lat:43.7333  }, // Monaco
+    { id:"336", lon:12.4534,  lat:41.9029  }, // Vatican
+    { id:"674", lon:12.4500,  lat:43.9333  }, // Saint-Marin
+    { id:"438", lon:9.5333,   lat:47.1667  }, // Liechtenstein
+    { id:"470", lon:14.3754,  lat:35.9375  }, // Malte
+    { id:"048", lon:50.5500,  lat:26.0275  }, // Bahreïn
+    { id:"702", lon:103.8198, lat:1.3521   }, // Singapour
+    { id:"462", lon:73.2207,  lat:3.2028   }, // Maldives
+    { id:"690", lon:55.4920,  lat:-4.6796  }, // Seychelles
+    { id:"678", lon:6.6131,   lat:0.1864   }, // São Tomé-et-Principe
+    { id:"132", lon:-23.6052, lat:15.1111  }, // Cap-Vert
+  ];
+
+  copies.forEach(({ g: copyG }) => {
+    MICROSTATES.forEach(({ id, lon, lat }) => {
+      const name = NAME_MAP[id];
+      if (!name) return;
+      const [cx, cy] = projection([lon, lat]);
+      copyG.append("circle")
+        .attr("cx", cx).attr("cy", cy).attr("r", 3.5)
+        .attr("data-id", id).attr("data-name", name)
+        .attr("class", "country microstate")
+        .attr("fill", mapFill.todo)
+        .attr("stroke", "#ffffff").attr("stroke-width", 0.8)
+        .on("mouseenter", function(event) {
+          showTooltip(event, id, name);
+          const s = allData[id]?.status || "todo";
+          d3mod.selectAll(`[data-id="${id}"]`).attr("fill", mapHover[s] || mapHover.todo);
+        })
+        .on("mousemove", moveTooltip)
+        .on("mouseleave", () => { hideTooltip(); applyColorById(id); })
+        .on("click", () => openPanel(id, name));
+    });
+  });
+
   // Centre vertical du contenu carte (en coordonnées de projection)
   const MAP_CENTER_Y = (NORTH_Y + SOUTH_Y) / 2;
 
@@ -258,6 +295,8 @@ async function loadMap() {
       copies.forEach(({ g: copyG, col }) => {
         copyG.attr("transform", `translate(${nx + col * sW}, ${ty}) scale(${k})`);
       });
+      // Maintenir la taille visuelle des micro-États constante au zoom
+      svg.selectAll(".microstate").attr("r", 3.5 / k).attr("stroke-width", 0.8 / k);
     });
 
   svg.call(zoom).on("dblclick.zoom", null);
