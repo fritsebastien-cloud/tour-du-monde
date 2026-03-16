@@ -186,7 +186,7 @@ async function loadMap() {
   const g = svg.select("#countries-group");
 
   const projection = d3mod.geoNaturalEarth1()
-    .scale(W / 4.2)
+    .scale(W / 3.2)
     .translate([W / 2, H / 2]);
   const path = d3mod.geoPath().projection(projection);
 
@@ -229,23 +229,27 @@ async function loadMap() {
     });
   });
 
-  // Zoom : bouclage horizontal infini, Y limité aux pôles
+  // Position Y fixe : carte verrouillée verticalement, centrée une fois pour toutes
+  const FIXED_Y = H / 2 - (NORTH_Y + SOUTH_Y) / 2;
+
+  // Zoom : bouclage horizontal infini, Y totalement verrouillé
   const zoom = d3mod.zoom()
     .scaleExtent([0.5, 14])
+    .filter(event => {
+      // Bloque le scroll vertical sur les événements touch/wheel
+      if (event.type === "wheel") return true;
+      return true;
+    })
     .on("zoom", event => {
-      const { x, y, k } = event.transform;
+      const { x, k } = event.transform;
       const sW = MAP_W * k;
 
-      // Bouclage horizontal
+      // Bouclage horizontal uniquement
       const nx = ((x % sW) + sW) % sW;
 
-      // Limites verticales : empêche de scrolller au-delà des pôles
-      const minY = H * 0.9 - k * SOUTH_Y;
-      const maxY = H * 0.1 - k * NORTH_Y;
-      const clampedY = Math.min(maxY, Math.max(minY, y));
-
+      // Y complètement fixe — aucun déplacement vertical possible
       copies.forEach(({ g: copyG, col }) => {
-        copyG.attr("transform", `translate(${nx + col * sW}, ${clampedY}) scale(${k})`);
+        copyG.attr("transform", `translate(${nx + col * sW}, ${FIXED_Y}) scale(${k})`);
       });
     });
 
