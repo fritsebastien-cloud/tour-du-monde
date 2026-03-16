@@ -186,7 +186,7 @@ async function loadMap() {
   const g = svg.select("#countries-group");
 
   const projection = d3mod.geoNaturalEarth1()
-    .scale(W / 5.2)
+    .scale(W / 4.2)
     .translate([W / 2, H / 2]);
   const path = d3mod.geoPath().projection(projection);
 
