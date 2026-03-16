@@ -159,25 +159,12 @@ body.dark #map-svg { background: #0f1117; }
 
 .country {
   stroke: transparent;
-  stroke-width: 0.7;
+  stroke-width: 0;
   cursor: pointer;
-  transition: fill 0.12s ease, stroke 0.18s ease, transform 0.18s ease;
-  transform-box: fill-box;
-  transform-origin: center;
-}
-.country:hover {
-  stroke: rgba(0,0,0,0.18);
-  transform: scale(1.018);
-}
-body.dark .country:hover {
-  stroke: rgba(255,255,255,0.18);
+  transition: fill 0.12s ease, stroke 0.2s ease, stroke-width 0.2s ease, stroke-opacity 0.2s ease;
 }
 .country.selected {
-  stroke: rgba(0,0,0,0.32) !important;
-  stroke-width: 1.1;
-}
-body.dark .country.selected {
-  stroke: rgba(255,255,255,0.35) !important;
+  stroke-width: 1.4 !important;
 }
 
 #map-loading {

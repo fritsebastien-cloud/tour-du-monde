@@ -45,6 +45,14 @@ const statusColor = {
   done:   "#4ADE80"
 };
 
+// Couleur du trait au survol (version sombre du fill selon statut)
+const mapStroke = {
+  todo:   "#a8a8a2",
+  wip:    "#d4940a",
+  script: "#c8408a",
+  done:   "#38a060"
+};
+
 const mapFill = {
   todo:   "#ddddd8",
   wip:    "#f5c96a",
@@ -313,11 +321,18 @@ async function loadMap() {
         .attr("fill", mapFill.todo)
         .on("mouseenter", function(event) {
           showTooltip(event, id, name);
-          const s = allData[id]?.status || "todo";
-          d3mod.selectAll(`[data-id="${id}"]`).attr("fill", mapHover[s] || mapHover.todo);
+          const s = allData[id]?.status || null;
+          d3mod.selectAll(`[data-id="${id}"]`)
+            .attr("fill", mapHover[s] || mapHover.todo)
+            .attr("stroke", mapStroke[s] || mapStroke.todo)
+            .attr("stroke-width", 1.2);
         })
         .on("mousemove", moveTooltip)
-        .on("mouseleave", () => { hideTooltip(); applyColorById(id); })
+        .on("mouseleave", () => {
+          hideTooltip();
+          applyColorById(id);
+          d3mod.selectAll(`[data-id="${id}"]`).attr("stroke", "transparent").attr("stroke-width", 0);
+        })
         .on("click", () => openPanel(id, name))
         .on("contextmenu", function(event) { showCtxMenu(event, id, name); });
     });
@@ -334,11 +349,18 @@ async function loadMap() {
         .attr("fill", mapFill.todo)
         .on("mouseenter", function(event) {
           showTooltip(event, id, name);
-          const s = allData[id]?.status || "todo";
-          d3mod.selectAll(`[data-id="${id}"]`).attr("fill", mapHover[s] || mapHover.todo);
+          const s = allData[id]?.status || null;
+          d3mod.selectAll(`[data-id="${id}"]`)
+            .attr("fill", mapHover[s] || mapHover.todo)
+            .attr("stroke", mapStroke[s] || mapStroke.todo)
+            .attr("stroke-width", 1.2);
         })
         .on("mousemove", moveTooltip)
-        .on("mouseleave", () => { hideTooltip(); applyColorById(id); })
+        .on("mouseleave", () => {
+          hideTooltip();
+          applyColorById(id);
+          d3mod.selectAll(`[data-id="${id}"]`).attr("stroke", "transparent").attr("stroke-width", 0);
+        })
         .on("click", () => openPanel(id, name))
         .on("contextmenu", function(event) { showCtxMenu(event, id, name); });
     });
@@ -557,8 +579,16 @@ function openPanel(id, name) {
         { day: "numeric", month: "long", hour: "2-digit", minute: "2-digit" })
     : "";
 
-  document.querySelectorAll(".country.selected").forEach(el => el.classList.remove("selected"));
-  document.querySelectorAll(`[data-id="${id}"]`).forEach(el => el.classList.add("selected"));
+  document.querySelectorAll(".country.selected").forEach(el => {
+    el.classList.remove("selected");
+    el.setAttribute("stroke", "transparent");
+    el.setAttribute("stroke-width", 0);
+  });
+  const selStatus = allData[id]?.status || null;
+  document.querySelectorAll(`[data-id="${id}"]`).forEach(el => {
+    el.classList.add("selected");
+    el.setAttribute("stroke", mapStroke[selStatus] || mapStroke.todo);
+  });
 
   panel.classList.remove("hidden");
   overlay.classList.remove("hidden");
@@ -594,7 +624,11 @@ function autoSave() {
 
 function closePanel() {
   autoSave();
-  document.querySelectorAll(".country.selected").forEach(el => el.classList.remove("selected"));
+  document.querySelectorAll(".country.selected").forEach(el => {
+    el.classList.remove("selected");
+    el.setAttribute("stroke", "transparent");
+    el.setAttribute("stroke-width", 0);
+  });
   panel.classList.add("hidden"); overlay.classList.add("hidden");
   selectedId = null; applyColors();
 }
