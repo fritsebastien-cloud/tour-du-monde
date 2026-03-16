@@ -399,9 +399,9 @@ function zoomToCountry(id) {
 
 // ── Couleurs ──────────────────────────────────────────────────────────────────
 function applyColorToEl(el, id) {
-  const s = allData[id]?.status || "todo";
-  const filtered = !activeFilters.has(s);
-  el.setAttribute("fill", filtered ? "#e8e8e4" : (mapFill[s] || mapFill.todo));
+  const s = allData[id]?.status || null;
+  const filtered = s && !activeFilters.has(s);
+  el.setAttribute("fill", filtered ? "#e8e8e4" : (mapFill[s] || mapFill["todo"]));
   el.setAttribute("stroke", id === selectedId ? "#333333" : "#ffffff");
   el.setAttribute("stroke-width", id === selectedId ? "1.5" : "0.6");
   el.style.opacity = filtered ? "0.35" : "1";
@@ -418,14 +418,12 @@ function updateStats() {
   const TOTAL = 241;
   const v = Object.values(allData);
   const counts = {
-    todo:   v.filter(x => x.status === "todo").length,
     wip:    v.filter(x => x.status === "wip").length,
     script: v.filter(x => x.status === "script").length,
     done:   v.filter(x => x.status === "done").length,
   };
-  const annotated = counts.todo + counts.wip + counts.script + counts.done;
+  const annotated = counts.wip + counts.script + counts.done;
 
-  document.getElementById("cnt-todo").textContent   = counts.todo;
   document.getElementById("cnt-wip").textContent    = counts.wip;
   document.getElementById("cnt-script").textContent = counts.script;
   document.getElementById("cnt-done").textContent   = counts.done;
@@ -436,8 +434,7 @@ function updateStats() {
   const bar = document.getElementById("progress-bar");
   if (bar) {
     bar.innerHTML = [
-      ["todo", counts.todo], ["wip", counts.wip],
-      ["script", counts.script], ["done", counts.done]
+      ["wip", counts.wip], ["script", counts.script], ["done", counts.done]
     ].map(([s, n]) => n > 0
       ? `<span class="pb-${s}" style="width:${n / TOTAL * 100}%"></span>` : ""
     ).join("");
@@ -541,8 +538,8 @@ const overlay = document.getElementById("overlay");
 
 function updatePanelStatusDot(status) {
   const dot = document.getElementById("panel-status-dot");
-  dot.style.background = statusColor[status] || statusColor.todo;
-  document.getElementById("panel-status-label").textContent = statusLabel[status] || statusLabel.todo;
+  dot.style.background = statusColor[status] || "#c0c0b8";
+  document.getElementById("panel-status-label").textContent = statusLabel[status] || "À explorer";
 }
 
 function openPanel(id, name) {
@@ -552,7 +549,7 @@ function openPanel(id, name) {
   document.getElementById("panel-artist").value           = entry.artist   || "";
   document.getElementById("panel-category").value         = entry.category || "";
   document.getElementById("panel-note").value             = entry.note     || "";
-  currentStatus = entry.status || "todo";
+  currentStatus = entry.status && entry.status !== "todo" ? entry.status : null;
   currentLinks  = entry.links  || [];
 
   document.querySelectorAll(".sbtn").forEach(b =>
@@ -572,11 +569,22 @@ function openPanel(id, name) {
 
 function autoSave() {
   if (!selectedId) return;
+  const artist   = document.getElementById("panel-artist").value.trim();
+  const category = document.getElementById("panel-category").value.trim();
+  const note     = document.getElementById("panel-note").value.trim();
+  const hasContent = currentStatus || artist || category || note || currentLinks.length;
+  if (!hasContent) {
+    // Rien à sauvegarder — effacer l'entrée si elle existait
+    if (allData[selectedId]) {
+      delete allData[selectedId];
+      set(ref(db, "countries/" + selectedId), null);
+      applyColorById(selectedId); updateStats(); renderDrawer();
+    }
+    return;
+  }
   const entry = {
-    status:   currentStatus,
-    artist:   document.getElementById("panel-artist").value.trim(),
-    category: document.getElementById("panel-category").value.trim(),
-    note:     document.getElementById("panel-note").value.trim(),
+    status:   currentStatus || null,
+    artist, category, note,
     links:    currentLinks,
     editedAt: Date.now(),
     name:     selectedName
@@ -595,7 +603,7 @@ function closePanel() {
 document.getElementById("panel-close").addEventListener("click", closePanel);
 overlay.addEventListener("click", closePanel);
 
-document.querySelectorAll(".sbtn").forEach(btn => {
+document.querySelectorAll(".sbtn[data-s]").forEach(btn => {
   btn.addEventListener("click", () => {
     currentStatus = btn.dataset.s;
     document.querySelectorAll(".sbtn").forEach(b => b.classList.remove("active"));
@@ -603,6 +611,13 @@ document.querySelectorAll(".sbtn").forEach(btn => {
     updatePanelStatusDot(currentStatus);
     autoSave();
   });
+});
+
+document.getElementById("status-clear").addEventListener("click", () => {
+  currentStatus = null;
+  document.querySelectorAll(".sbtn").forEach(b => b.classList.remove("active"));
+  updatePanelStatusDot(null);
+  autoSave();
 });
 
 document.getElementById("panel-save").addEventListener("click", () => {
@@ -658,6 +673,17 @@ ctxMenu.querySelectorAll(".ctx-item[data-s]").forEach(item => {
     applyColorById(id); updateStats(); renderDrawer();
     ctxMenu.classList.add("hidden");
   });
+});
+
+document.getElementById("ctx-clear").addEventListener("click", e => {
+  e.stopPropagation();
+  const id   = ctxMenu.dataset.id;
+  if (allData[id]) {
+    delete allData[id];
+    set(ref(db, "countries/" + id), null);
+    applyColorById(id); updateStats(); renderDrawer();
+  }
+  ctxMenu.classList.add("hidden");
 });
 
 document.getElementById("ctx-open").addEventListener("click", e => {

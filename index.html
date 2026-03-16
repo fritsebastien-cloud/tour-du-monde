@@ -48,7 +48,6 @@
       </div>
       <div class="header-right">
         <span id="progress-label" class="progress-label">0 / 241</span>
-        <div class="stat-pill"><span class="dot dot-todo"></span><span id="cnt-todo">0</span></div>
         <div class="stat-pill"><span class="dot dot-wip"></span><span id="cnt-wip">0</span></div>
         <div class="stat-pill"><span class="dot dot-script"></span><span id="cnt-script">0</span></div>
         <div class="stat-pill"><span class="dot dot-done"></span><span id="cnt-done">0</span></div>
@@ -107,10 +106,10 @@
         <div class="field-group">
           <label class="lbl">Statut</label>
           <div class="status-row">
-            <button class="sbtn s-todo" data-s="todo">À explorer</button>
             <button class="sbtn s-wip" data-s="wip">Piste en cours</button>
             <button class="sbtn s-script" data-s="script">Artiste choisi</button>
             <button class="sbtn s-done" data-s="done">Prêt à tourner</button>
+            <button class="sbtn s-clear" id="status-clear">Effacer</button>
           </div>
         </div>
         <div class="field-group">
@@ -150,10 +149,10 @@
 
     <!-- Menu contextuel clic droit -->
     <div id="ctx-menu" class="hidden">
-      <div class="ctx-item" data-s="todo"><span class="dot dot-todo"></span>À explorer</div>
       <div class="ctx-item" data-s="wip"><span class="dot dot-wip"></span>Piste en cours</div>
       <div class="ctx-item" data-s="script"><span class="dot dot-script"></span>Artiste choisi</div>
       <div class="ctx-item" data-s="done"><span class="dot dot-done"></span>Prêt à tourner</div>
+      <div class="ctx-item ctx-clear" id="ctx-clear">Effacer le statut</div>
       <div class="ctx-sep"></div>
       <div class="ctx-item ctx-open" id="ctx-open">Ouvrir la fiche →</div>
     </div>
