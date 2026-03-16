@@ -38,12 +38,18 @@ const statusColor = {
   done:   "#4ADE80"
 };
 
-// Couleurs de remplissage sur la carte (foncées pour contraste)
+// Couleurs de remplissage sur la carte (thème clair)
 const mapFill = {
-  todo:   "#22251e",
-  wip:    "#5c3f08",
-  script: "#1a2854",
-  done:   "#163d22"
+  todo:   "#ddddd8",
+  wip:    "#f5c96a",
+  script: "#8fb4f5",
+  done:   "#72cc92"
+};
+const mapHover = {
+  todo:   "#c8c8c2",
+  wip:    "#e8b84e",
+  script: "#6d9ee8",
+  done:   "#55bb78"
 };
 
 const NAME_MAP = {
@@ -184,25 +190,6 @@ async function loadMap() {
     .translate([W / 2, H / 2]);
   const path = d3mod.geoPath().projection(projection);
 
-  // Fond océan
-  svg.insert("rect", ":first-child")
-    .attr("width", W).attr("height", H).attr("fill", "#080d18");
-
-  // Graticule
-  const grat = svg.insert("g", "#countries-group").attr("class", "graticule-group");
-  grat.append("path")
-    .datum(d3mod.geoGraticule()())
-    .attr("d", path)
-    .attr("fill", "none")
-    .attr("stroke", "rgba(255,255,255,0.035)")
-    .attr("stroke-width", 0.4);
-  grat.append("path")
-    .datum({ type: "Sphere" })
-    .attr("d", path)
-    .attr("fill", "none")
-    .attr("stroke", "rgba(255,255,255,0.07)")
-    .attr("stroke-width", 1);
-
   // Pays
   topomod.feature(world, world.objects.countries).features.forEach(f => {
     const id = String(f.id).padStart(3, "0");
@@ -215,26 +202,24 @@ async function loadMap() {
       .attr("data-id", id)
       .attr("data-name", name)
       .attr("class", "country")
-      .attr("fill", "#22251e")
-      .attr("stroke", "#080d18")
-      .attr("stroke-width", 0.4)
+      .attr("fill", mapFill.todo)
+      .attr("stroke", "#ffffff")
+      .attr("stroke-width", 0.6)
       .on("mouseenter", function(event) {
         showTooltip(event, id, name);
-        const s = allData[id]?.status;
-        if (!s || s === "todo") d3mod.select(this).attr("fill", "#3a3d32");
+        const s = allData[id]?.status || "todo";
+        d3mod.select(this).attr("fill", mapHover[s] || mapHover.todo);
       })
       .on("mousemove", moveTooltip)
       .on("mouseleave", function() { hideTooltip(); applyColorToEl(this, id); })
       .on("click", () => openPanel(id, name));
   });
 
-  // Zoom
+  // Zoom — translateExtent retiré pour défilement horizontal libre
   const zoom = d3mod.zoom()
-    .scaleExtent([1, 14])
-    .translateExtent([[0, 0], [W, H]])
+    .scaleExtent([0.6, 14])
     .on("zoom", event => {
       g.attr("transform", event.transform);
-      svg.selectAll(".graticule-group").attr("transform", event.transform);
     });
 
   svg.call(zoom).on("dblclick.zoom", null);
@@ -253,8 +238,8 @@ async function loadMap() {
 function applyColorToEl(el, id) {
   const s = allData[id]?.status || "todo";
   el.setAttribute("fill", mapFill[s] || mapFill.todo);
-  el.setAttribute("stroke", id === selectedId ? "#C8F562" : "#080d18");
-  el.setAttribute("stroke-width", id === selectedId ? "1.5" : "0.4");
+  el.setAttribute("stroke", id === selectedId ? "#333333" : "#ffffff");
+  el.setAttribute("stroke-width", id === selectedId ? "1.5" : "0.6");
 }
 function applyColors() {
   document.querySelectorAll("[data-id]").forEach(el =>
