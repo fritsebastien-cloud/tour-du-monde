@@ -23,8 +23,28 @@ let selectedName = null;
 let currentStatus = "todo";
 let currentLinks = [];
 
-const statusLabel = { todo: "À faire", wip: "En cours", done: "Publié" };
-const statusColor = { todo: "#4a4a44", wip: "#F5A623", done: "#4ADE80" };
+const statusLabel = {
+  todo:   "À explorer",
+  wip:    "Piste en cours",
+  script: "Script fini",
+  done:   "En ligne"
+};
+
+// Couleurs des points dans les listes/drawer
+const statusColor = {
+  todo:   "#4a4a44",
+  wip:    "#F5A623",
+  script: "#5b7cf7",
+  done:   "#4ADE80"
+};
+
+// Couleurs de remplissage sur la carte (foncées pour contraste)
+const mapFill = {
+  todo:   "#22251e",
+  wip:    "#5c3f08",
+  script: "#1a2854",
+  done:   "#163d22"
+};
 
 const NAME_MAP = {
   "004":"Afghanistan","008":"Albanie","012":"Algérie","020":"Andorre","024":"Angola",
@@ -70,6 +90,20 @@ const NAME_MAP = {
   "520":"Nauru","776":"Tonga","882":"Samoa","010":"Antarctique","630":"Porto Rico"
 };
 
+// ── Thème ──────────────────────────────────────────────────────────────────────
+const themeBtn = document.getElementById("theme-btn");
+const sunIcon  = document.getElementById("icon-sun");
+const moonIcon = document.getElementById("icon-moon");
+function applyTheme(dark) {
+  document.body.classList.toggle("dark", dark);
+  sunIcon.style.display  = dark ? "none" : "";
+  moonIcon.style.display = dark ? "" : "none";
+  localStorage.setItem("tdc_theme", dark ? "dark" : "light");
+}
+const savedTheme = localStorage.getItem("tdc_theme");
+applyTheme(savedTheme === "dark");
+themeBtn.addEventListener("click", () => applyTheme(!document.body.classList.contains("dark")));
+
 // ── Login ─────────────────────────────────────────────────────────────────────
 const loginScreen = document.getElementById("login-screen");
 const appEl = document.getElementById("app");
@@ -109,7 +143,7 @@ function listenToData() {
 
 // ── Map ───────────────────────────────────────────────────────────────────────
 async function loadMap() {
-  const [d3, topo, world] = await Promise.all([
+  const [d3mod, topomod, world] = await Promise.all([
     import("https://cdn.jsdelivr.net/npm/d3@7/+esm"),
     import("https://cdn.jsdelivr.net/npm/topojson-client@3/+esm"),
     fetch("https://cdn.jsdelivr.net/npm/world-atlas@2/countries-110m.json").then(r => r.json())
@@ -119,13 +153,13 @@ async function loadMap() {
   const W = wrapper.clientWidth || 1200;
   const H = wrapper.clientHeight || 620;
 
-  const svg = d3.select("#map-svg").attr("viewBox", `0 0 ${W} ${H}`);
+  const svg = d3mod.select("#map-svg").attr("viewBox", `0 0 ${W} ${H}`);
   const g = svg.select("#countries-group");
 
-  const projection = d3.geoNaturalEarth1()
+  const projection = d3mod.geoNaturalEarth1()
     .scale(W / 6.2)
     .translate([W / 2, H / 2]);
-  const path = d3.geoPath().projection(projection);
+  const path = d3mod.geoPath().projection(projection);
 
   // Fond océan
   svg.insert("rect", ":first-child")
@@ -134,7 +168,7 @@ async function loadMap() {
   // Graticule
   const grat = svg.insert("g", "#countries-group").attr("class", "graticule-group");
   grat.append("path")
-    .datum(d3.geoGraticule()())
+    .datum(d3mod.geoGraticule()())
     .attr("d", path)
     .attr("fill", "none")
     .attr("stroke", "rgba(255,255,255,0.035)")
@@ -147,7 +181,7 @@ async function loadMap() {
     .attr("stroke-width", 1);
 
   // Pays
-  topo.feature(world, world.objects.countries).features.forEach(f => {
+  topomod.feature(world, world.objects.countries).features.forEach(f => {
     const id = String(f.id).padStart(3, "0");
     const name = NAME_MAP[id];
     if (!name) return;
@@ -163,7 +197,8 @@ async function loadMap() {
       .attr("stroke-width", 0.4)
       .on("mouseenter", function(event) {
         showTooltip(event, id, name);
-        if (!allData[id] || allData[id].status === "todo") d3.select(this).attr("fill", "#3a3d32");
+        const s = allData[id]?.status;
+        if (!s || s === "todo") d3mod.select(this).attr("fill", "#3a3d32");
       })
       .on("mousemove", moveTooltip)
       .on("mouseleave", function() { hideTooltip(); applyColorToEl(this, id); })
@@ -171,7 +206,7 @@ async function loadMap() {
   });
 
   // Zoom
-  const zoom = d3.zoom()
+  const zoom = d3mod.zoom()
     .scaleExtent([1, 14])
     .translateExtent([[0, 0], [W, H]])
     .on("zoom", event => {
@@ -186,15 +221,15 @@ async function loadMap() {
   document.getElementById("zoom-out").addEventListener("click", () =>
     svg.transition().duration(250).call(zoom.scaleBy, 0.625));
   document.getElementById("zoom-reset").addEventListener("click", () =>
-    svg.transition().duration(400).call(zoom.transform, d3.zoomIdentity));
+    svg.transition().duration(400).call(zoom.transform, d3mod.zoomIdentity));
 
   document.getElementById("map-loading").remove();
   applyColors();
 }
 
 function applyColorToEl(el, id) {
-  const s = allData[id]?.status;
-  el.setAttribute("fill", s === "wip" ? "#5c3f08" : s === "done" ? "#163d22" : "#22251e");
+  const s = allData[id]?.status || "todo";
+  el.setAttribute("fill", mapFill[s] || mapFill.todo);
   el.setAttribute("stroke", id === selectedId ? "#C8F562" : "#080d18");
   el.setAttribute("stroke-width", id === selectedId ? "1.5" : "0.4");
 }
@@ -204,9 +239,10 @@ function applyColors() {
 }
 function updateStats() {
   const v = Object.values(allData);
-  document.getElementById("cnt-todo").textContent = v.filter(x => x.status === "todo").length;
-  document.getElementById("cnt-wip").textContent = v.filter(x => x.status === "wip").length;
-  document.getElementById("cnt-done").textContent = v.filter(x => x.status === "done").length;
+  document.getElementById("cnt-todo").textContent   = v.filter(x => x.status === "todo").length;
+  document.getElementById("cnt-wip").textContent    = v.filter(x => x.status === "wip").length;
+  document.getElementById("cnt-script").textContent = v.filter(x => x.status === "script").length;
+  document.getElementById("cnt-done").textContent   = v.filter(x => x.status === "done").length;
 }
 
 // ── Tooltip ───────────────────────────────────────────────────────────────────
@@ -216,39 +252,59 @@ const mapWrap = document.getElementById("map-wrapper");
 function showTooltip(event, id, name) {
   const entry = allData[id];
   document.getElementById("tt-name").textContent = name;
-  document.getElementById("tt-status").textContent = entry ? statusLabel[entry.status || "todo"] : "Cliquer pour annoter";
+  document.getElementById("tt-status").textContent = entry
+    ? statusLabel[entry.status || "todo"]
+    : "Cliquer pour annoter";
   const noteEl = document.getElementById("tt-note");
   const preview = entry?.artist || entry?.note;
-  if (preview) { noteEl.textContent = preview.substring(0, 80) + (preview.length > 80 ? "…" : ""); noteEl.style.display = "block"; }
-  else noteEl.style.display = "none";
+  if (preview) {
+    noteEl.textContent = preview.substring(0, 80) + (preview.length > 80 ? "…" : "");
+    noteEl.style.display = "block";
+  } else {
+    noteEl.style.display = "none";
+  }
   tt.style.opacity = "1";
   moveTooltip(event);
 }
 function moveTooltip(event) {
   const r = mapWrap.getBoundingClientRect();
   let x = event.clientX - r.left + 16, y = event.clientY - r.top + 16;
-  if (x + 240 > r.width) x = event.clientX - r.left - 250;
+  if (x + 240 > r.width)  x = event.clientX - r.left - 250;
   if (y + 120 > r.height) y = event.clientY - r.top - 105;
   tt.style.left = x + "px"; tt.style.top = y + "px";
 }
 function hideTooltip() { tt.style.opacity = "0"; }
 
 // ── Panel ─────────────────────────────────────────────────────────────────────
-const panel = document.getElementById("panel");
+const panel   = document.getElementById("panel");
 const overlay = document.getElementById("overlay");
+
+function updatePanelStatusDot(status) {
+  const dot = document.getElementById("panel-status-dot");
+  dot.style.background = statusColor[status] || statusColor.todo;
+  document.getElementById("panel-status-label").textContent = statusLabel[status] || statusLabel.todo;
+}
 
 function openPanel(id, name) {
   selectedId = id; selectedName = name;
   const entry = allData[id] || {};
-  document.getElementById("panel-name").textContent = name;
-  document.getElementById("panel-artist").value = entry.artist || "";
-  document.getElementById("panel-note").value = entry.note || "";
+  document.getElementById("panel-name").textContent       = name;
+  document.getElementById("panel-artist").value           = entry.artist   || "";
+  document.getElementById("panel-category").value         = entry.category || "";
+  document.getElementById("panel-note").value             = entry.note     || "";
   currentStatus = entry.status || "todo";
-  currentLinks = entry.links || [];
-  document.querySelectorAll(".status-btn").forEach(b => b.classList.toggle("active", b.dataset.s === currentStatus));
+  currentLinks  = entry.links  || [];
+
+  document.querySelectorAll(".sbtn").forEach(b =>
+    b.classList.toggle("active", b.dataset.s === currentStatus));
+  updatePanelStatusDot(currentStatus);
   renderLinks();
+
   document.getElementById("last-edit").textContent = entry.editedAt
-    ? "Modifié le " + new Date(entry.editedAt).toLocaleDateString("fr-FR", { day: "numeric", month: "long", hour: "2-digit", minute: "2-digit" }) : "";
+    ? "Modifié le " + new Date(entry.editedAt).toLocaleDateString("fr-FR",
+        { day: "numeric", month: "long", hour: "2-digit", minute: "2-digit" })
+    : "";
+
   panel.classList.remove("hidden");
   overlay.classList.remove("hidden");
   applyColors();
@@ -261,20 +317,31 @@ function closePanel() {
 
 document.getElementById("panel-close").addEventListener("click", closePanel);
 overlay.addEventListener("click", closePanel);
-document.querySelectorAll(".status-btn").forEach(btn => {
+
+document.querySelectorAll(".sbtn").forEach(btn => {
   btn.addEventListener("click", () => {
     currentStatus = btn.dataset.s;
-    document.querySelectorAll(".status-btn").forEach(b => b.classList.remove("active"));
+    document.querySelectorAll(".sbtn").forEach(b => b.classList.remove("active"));
     btn.classList.add("active");
+    updatePanelStatusDot(currentStatus);
   });
 });
+
 document.getElementById("panel-save").addEventListener("click", () => {
   if (!selectedId) return;
-  const entry = { status: currentStatus, artist: document.getElementById("panel-artist").value.trim(),
-    note: document.getElementById("panel-note").value.trim(), links: currentLinks, editedAt: Date.now(), name: selectedName };
+  const entry = {
+    status:   currentStatus,
+    artist:   document.getElementById("panel-artist").value.trim(),
+    category: document.getElementById("panel-category").value.trim(),
+    note:     document.getElementById("panel-note").value.trim(),
+    links:    currentLinks,
+    editedAt: Date.now(),
+    name:     selectedName
+  };
   allData[selectedId] = { ...(allData[selectedId] || {}), ...entry };
   saveCountry(selectedId, allData[selectedId]);
   applyColors(); updateStats(); renderDrawer();
+
   const btn = document.getElementById("panel-save");
   btn.textContent = "Enregistré ✓"; btn.classList.add("saved");
   setTimeout(() => { btn.textContent = "Enregistrer"; btn.classList.remove("saved"); }, 2000);
@@ -301,23 +368,35 @@ document.getElementById("add-link-btn").addEventListener("click", () => {
 
 // ── Drawer ────────────────────────────────────────────────────────────────────
 const drawer = document.getElementById("list-drawer");
-document.getElementById("list-toggle-btn").addEventListener("click", () => { drawer.classList.toggle("hidden"); renderDrawer(); });
-document.getElementById("drawer-close").addEventListener("click", () => drawer.classList.add("hidden"));
+document.getElementById("list-toggle-btn").addEventListener("click", () => {
+  drawer.classList.toggle("hidden"); renderDrawer();
+});
+document.getElementById("drawer-close").addEventListener("click", () =>
+  drawer.classList.add("hidden"));
 
 function renderDrawer() {
   const body = document.getElementById("drawer-body");
   const entries = Object.entries(allData).filter(([, v]) => v?.name);
-  if (!entries.length) { body.innerHTML = '<p style="padding:1rem 1.5rem;font-size:13px;color:var(--text2)">Aucun pays annoté.</p>'; return; }
-  entries.sort((a, b) => ({ done: 0, wip: 1, todo: 2 }[a[1].status || "todo"] - { done: 0, wip: 1, todo: 2 }[b[1].status || "todo"]));
+  if (!entries.length) {
+    body.innerHTML = '<p style="padding:1rem 1.5rem;font-size:13px;color:#aaa">Aucun pays annoté.</p>';
+    return;
+  }
+  const order = { done: 0, script: 1, wip: 2, todo: 3 };
+  entries.sort((a, b) => (order[a[1].status || "todo"] ?? 3) - (order[b[1].status || "todo"] ?? 3));
   body.innerHTML = entries.map(([id, v]) => `
-    <div class="drawer-item" data-id="${id}" data-name="${(v.name || id).replace(/"/g, "&quot;")}">
-      <div class="di-dot" style="background:${statusColor[v.status || "todo"]}"></div>
-      <div><div class="di-name">${v.name || id}</div>
-      ${v.artist ? `<div class="di-artist">${v.artist}</div>` : ""}
-      ${v.note ? `<div class="di-note">${v.note.substring(0, 60)}…</div>` : ""}</div>
+    <div class="ditem" data-id="${id}" data-name="${(v.name || id).replace(/"/g, "&quot;")}">
+      <div class="d-dot" style="background:${statusColor[v.status || "todo"]}"></div>
+      <div>
+        <div class="d-name">${v.name || id}</div>
+        ${v.artist   ? `<div class="d-artist">${v.artist}</div>` : ""}
+        ${v.category ? `<div class="d-cat">${v.category}</div>` : ""}
+      </div>
     </div>`).join("");
-  body.querySelectorAll(".drawer-item").forEach(el =>
-    el.addEventListener("click", () => { drawer.classList.add("hidden"); openPanel(el.dataset.id, el.dataset.name); }));
+  body.querySelectorAll(".ditem").forEach(el =>
+    el.addEventListener("click", () => {
+      drawer.classList.add("hidden");
+      openPanel(el.dataset.id, el.dataset.name);
+    }));
 }
 
 function initApp() { listenToData(); loadMap(); }
