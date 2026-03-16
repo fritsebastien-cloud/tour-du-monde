@@ -252,6 +252,9 @@ async function loadMap() {
 
   svg.call(zoom).on("dblclick.zoom", null);
 
+  // Position initiale : monde entier visible dès le chargement
+  svg.call(zoom.transform, d3mod.zoomIdentity);
+
   document.getElementById("zoom-in").addEventListener("click", () =>
     svg.transition().duration(250).call(zoom.scaleBy, 1.6));
   document.getElementById("zoom-out").addEventListener("click", () =>
