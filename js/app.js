@@ -1,7 +1,6 @@
 import { initializeApp } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-app.js";
 import { getDatabase, ref, set, onValue } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-database.js";
 
-// ⚠️ TES CLÉS FIREBASE
 const FIREBASE_CONFIG = {
   apiKey:            "AIzaSyBkw6ox4lZx5G3Suo2HIWj6oq-mUaVii-E",
   authDomain:        "map-concept-761a5.firebaseapp.com",
@@ -23,6 +22,15 @@ let selectedName = null;
 let currentStatus = "todo";
 let currentLinks = [];
 
+// Références carte (initialisées dans loadMap)
+let d3lib = null;
+let svgSel = null, zoomBeh = null, projFn = null;
+let mapW = 0, mapH = 0;
+const countryCentroids = {};
+
+// Filtres actifs par statut
+const activeFilters = new Set(["todo", "wip", "script", "done"]);
+
 const statusLabel = {
   todo:   "À explorer",
   wip:    "Piste en cours",
@@ -30,7 +38,6 @@ const statusLabel = {
   done:   "Prêt à tourner"
 };
 
-// Couleurs des points dans les listes/drawer
 const statusColor = {
   todo:   "#4a4a44",
   wip:    "#F5A623",
@@ -38,7 +45,6 @@ const statusColor = {
   done:   "#4ADE80"
 };
 
-// Couleurs de remplissage sur la carte (thème clair)
 const mapFill = {
   todo:   "#ddddd8",
   wip:    "#f5c96a",
@@ -50,6 +56,70 @@ const mapHover = {
   wip:    "#e8b84e",
   script: "#e87ab0",
   done:   "#55bb78"
+};
+
+// Continents pour le drawer
+const CONTINENT = {
+  // Afrique
+  "012":"Afrique","024":"Afrique","204":"Afrique","072":"Afrique","854":"Afrique",
+  "108":"Afrique","132":"Afrique","120":"Afrique","140":"Afrique","148":"Afrique",
+  "174":"Afrique","178":"Afrique","180":"Afrique","384":"Afrique","262":"Afrique",
+  "818":"Afrique","226":"Afrique","232":"Afrique","231":"Afrique","266":"Afrique",
+  "270":"Afrique","288":"Afrique","324":"Afrique","624":"Afrique","404":"Afrique",
+  "426":"Afrique","430":"Afrique","434":"Afrique","450":"Afrique","454":"Afrique",
+  "466":"Afrique","478":"Afrique","480":"Afrique","504":"Afrique","508":"Afrique",
+  "516":"Afrique","562":"Afrique","566":"Afrique","646":"Afrique","678":"Afrique",
+  "686":"Afrique","694":"Afrique","706":"Afrique","710":"Afrique","728":"Afrique",
+  "729":"Afrique","748":"Afrique","768":"Afrique","788":"Afrique","800":"Afrique",
+  "834":"Afrique","894":"Afrique","716":"Afrique","732":"Afrique","654":"Afrique",
+  "690":"Afrique",
+  // Amér. Nord
+  "028":"Amér. Nord","044":"Amér. Nord","084":"Amér. Nord","124":"Amér. Nord",
+  "188":"Amér. Nord","192":"Amér. Nord","212":"Amér. Nord","214":"Amér. Nord",
+  "222":"Amér. Nord","308":"Amér. Nord","320":"Amér. Nord","332":"Amér. Nord",
+  "340":"Amér. Nord","388":"Amér. Nord","484":"Amér. Nord","558":"Amér. Nord",
+  "591":"Amér. Nord","630":"Amér. Nord","659":"Amér. Nord","662":"Amér. Nord",
+  "670":"Amér. Nord","780":"Amér. Nord","840":"Amér. Nord","052":"Amér. Nord",
+  "060":"Amér. Nord","136":"Amér. Nord","500":"Amér. Nord","660":"Amér. Nord",
+  "652":"Amér. Nord","663":"Amér. Nord","666":"Amér. Nord","796":"Amér. Nord",
+  "850":"Amér. Nord","092":"Amér. Nord","316":"Amér. Nord","580":"Amér. Nord",
+  "531":"Amér. Nord","533":"Amér. Nord","534":"Amér. Nord",
+  // Amér. Sud
+  "032":"Amér. Sud","068":"Amér. Sud","076":"Amér. Sud","152":"Amér. Sud",
+  "170":"Amér. Sud","218":"Amér. Sud","328":"Amér. Sud","600":"Amér. Sud",
+  "604":"Amér. Sud","740":"Amér. Sud","858":"Amér. Sud","862":"Amér. Sud",
+  "238":"Amér. Sud","239":"Amér. Sud",
+  // Asie
+  "004":"Asie","050":"Asie","064":"Asie","096":"Asie","116":"Asie",
+  "156":"Asie","408":"Asie","410":"Asie","368":"Asie","364":"Asie",
+  "376":"Asie","392":"Asie","400":"Asie","398":"Asie","417":"Asie",
+  "414":"Asie","418":"Asie","422":"Asie","458":"Asie","462":"Asie",
+  "496":"Asie","104":"Asie","524":"Asie","512":"Asie","586":"Asie",
+  "275":"Asie","608":"Asie","634":"Asie","682":"Asie","702":"Asie",
+  "144":"Asie","760":"Asie","158":"Asie","762":"Asie","764":"Asie",
+  "626":"Asie","795":"Asie","792":"Asie","784":"Asie","860":"Asie",
+  "704":"Asie","887":"Asie","048":"Asie","356":"Asie","360":"Asie",
+  "344":"Asie","446":"Asie","086":"Asie",
+  // Europe
+  "008":"Europe","276":"Europe","020":"Europe","040":"Europe","112":"Europe",
+  "056":"Europe","070":"Europe","100":"Europe","196":"Europe","191":"Europe",
+  "208":"Europe","233":"Europe","246":"Europe","250":"Europe","268":"Europe",
+  "300":"Europe","348":"Europe","352":"Europe","372":"Europe","380":"Europe",
+  "428":"Europe","440":"Europe","442":"Europe","807":"Europe","470":"Europe",
+  "498":"Europe","499":"Europe","528":"Europe","578":"Europe","616":"Europe",
+  "620":"Europe","642":"Europe","826":"Europe","643":"Europe","688":"Europe",
+  "703":"Europe","705":"Europe","724":"Europe","752":"Europe","756":"Europe",
+  "203":"Europe","804":"Europe","051":"Europe","031":"Europe","304":"Europe",
+  "234":"Europe","248":"Europe","438":"Europe","492":"Europe","674":"Europe",
+  "336":"Europe","831":"Europe","832":"Europe","833":"Europe",
+  // Océanie
+  "036":"Océanie","242":"Océanie","296":"Océanie","584":"Océanie",
+  "090":"Océanie","583":"Océanie","520":"Océanie","554":"Océanie",
+  "585":"Océanie","598":"Océanie","882":"Océanie","016":"Océanie",
+  "776":"Océanie","548":"Océanie","258":"Océanie","540":"Océanie",
+  "184":"Océanie","570":"Océanie","574":"Océanie","612":"Océanie","876":"Océanie",
+  // Autres
+  "010":"Autres","260":"Autres","334":"Autres"
 };
 
 const NAME_MAP = {
@@ -114,9 +184,9 @@ const NAME_MAP = {
   "776":"Tonga","548":"Vanuatu","258":"Polynésie française","540":"Nouvelle-Calédonie",
   "184":"Îles Cook","570":"Niué","574":"Île Norfolk","612":"Îles Pitcairn",
   "876":"Wallis-et-Futuna","690":"Seychelles",
-  // Autres / Territoires
+  // Autres
   "010":"Antarctique","260":"Terres australes françaises",
-  "334":"Îles Heard-et-MacDonald","239":"Géorgie du Sud"
+  "334":"Îles Heard-et-MacDonald"
 };
 
 // ── Thème ──────────────────────────────────────────────────────────────────────
@@ -171,6 +241,20 @@ function listenToData() {
 }
 
 // ── Map ───────────────────────────────────────────────────────────────────────
+const MICROSTATES = [
+  { id:"492", lon:7.4167,   lat:43.7333  },
+  { id:"336", lon:12.4534,  lat:41.9029  },
+  { id:"674", lon:12.4500,  lat:43.9333  },
+  { id:"438", lon:9.5333,   lat:47.1667  },
+  { id:"470", lon:14.3754,  lat:35.9375  },
+  { id:"048", lon:50.5500,  lat:26.0275  },
+  { id:"702", lon:103.8198, lat:1.3521   },
+  { id:"462", lon:73.2207,  lat:3.2028   },
+  { id:"690", lon:55.4920,  lat:-4.6796  },
+  { id:"678", lon:6.6131,   lat:0.1864   },
+  { id:"132", lon:-23.6052, lat:15.1111  },
+];
+
 async function loadMap() {
   const [d3mod, topomod, world] = await Promise.all([
     import("https://cdn.jsdelivr.net/npm/d3@7/+esm"),
@@ -178,31 +262,42 @@ async function loadMap() {
     fetch("https://cdn.jsdelivr.net/npm/world-atlas@2/countries-50m.json").then(r => r.json())
   ]);
 
-  const wrapper = document.getElementById("map-wrapper");
-  const W = wrapper.clientWidth || 1200;
-  const H = wrapper.clientHeight || 620;
+  d3lib = d3mod;
 
-  const svg = d3mod.select("#map-svg").attr("viewBox", `0 0 ${W} ${H}`);
+  const wrapper = document.getElementById("map-wrapper");
+  mapW = wrapper.clientWidth || 1200;
+  mapH = wrapper.clientHeight || 620;
+
+  const svg = d3mod.select("#map-svg").attr("viewBox", `0 0 ${mapW} ${mapH}`);
+  svgSel = svg;
   const g = svg.select("#countries-group");
 
   const projection = d3mod.geoNaturalEarth1()
-    .scale(W / 5.5)
-    .translate([W / 2, H / 2]);
+    .scale(mapW / 5.5)
+    .translate([mapW / 2, mapH / 2]);
+  projFn = projection;
   const path = d3mod.geoPath().projection(projection);
 
-  // Largeur du monde en pixels à l'échelle 1
-  const MAP_W    = projection([180, 0])[0] - projection([-180, 0])[0];
-  const NORTH_Y  = projection([0,  90])[1]; // y du pôle Nord
-  const SOUTH_Y  = projection([0, -90])[1]; // y du pôle Sud
+  const MAP_W   = projection([180, 0])[0] - projection([-180, 0])[0];
+  const NORTH_Y = projection([0,  90])[1];
+  const SOUTH_Y = projection([0, -90])[1];
+  const MAP_CENTER_Y = (NORTH_Y + SOUTH_Y) / 2;
 
-  // 3 copies côte à côte — bouclage horizontal uniquement (géographiquement correct)
   const copies = [-1, 0, 1].map(col => ({
     g: g.append("g").attr("class", "map-copy"),
     col
   }));
 
-  // Rendu des pays dans chaque copie
   const features = topomod.feature(world, world.objects.countries).features;
+
+  // Centroids géographiques pour la recherche
+  features.forEach(f => {
+    const id = String(f.id).padStart(3, "0");
+    if (NAME_MAP[id]) countryCentroids[id] = d3mod.geoCentroid(f);
+  });
+  MICROSTATES.forEach(({ id, lon, lat }) => { countryCentroids[id] = [lon, lat]; });
+
+  // Rendu des pays (3 copies)
   copies.forEach(({ g: copyG }) => {
     features.forEach(f => {
       const id = String(f.id).padStart(3, "0");
@@ -225,26 +320,11 @@ async function loadMap() {
         })
         .on("mousemove", moveTooltip)
         .on("mouseleave", () => { hideTooltip(); applyColorById(id); })
-        .on("click", () => openPanel(id, name));
+        .on("click", () => openPanel(id, name))
+        .on("contextmenu", function(event) { showCtxMenu(event, id, name); });
     });
-  });
 
-  // Micro-États : trop petits pour être visibles comme polygones → points
-  const MICROSTATES = [
-    { id:"492", lon:7.4167,   lat:43.7333  }, // Monaco
-    { id:"336", lon:12.4534,  lat:41.9029  }, // Vatican
-    { id:"674", lon:12.4500,  lat:43.9333  }, // Saint-Marin
-    { id:"438", lon:9.5333,   lat:47.1667  }, // Liechtenstein
-    { id:"470", lon:14.3754,  lat:35.9375  }, // Malte
-    { id:"048", lon:50.5500,  lat:26.0275  }, // Bahreïn
-    { id:"702", lon:103.8198, lat:1.3521   }, // Singapour
-    { id:"462", lon:73.2207,  lat:3.2028   }, // Maldives
-    { id:"690", lon:55.4920,  lat:-4.6796  }, // Seychelles
-    { id:"678", lon:6.6131,   lat:0.1864   }, // São Tomé-et-Principe
-    { id:"132", lon:-23.6052, lat:15.1111  }, // Cap-Vert
-  ];
-
-  copies.forEach(({ g: copyG }) => {
+    // Micro-États : points
     MICROSTATES.forEach(({ id, lon, lat }) => {
       const name = NAME_MAP[id];
       if (!name) return;
@@ -262,46 +342,35 @@ async function loadMap() {
         })
         .on("mousemove", moveTooltip)
         .on("mouseleave", () => { hideTooltip(); applyColorById(id); })
-        .on("click", () => openPanel(id, name));
+        .on("click", () => openPanel(id, name))
+        .on("contextmenu", function(event) { showCtxMenu(event, id, name); });
     });
   });
 
-  // Centre vertical du contenu carte (en coordonnées de projection)
-  const MAP_CENTER_Y = (NORTH_Y + SOUTH_Y) / 2;
-
-  // Zoom : bouclage horizontal infini, Y libre quand zoomé / centré quand dézoomé
   const zoom = d3mod.zoom()
     .scaleExtent([0.8, 14])
     .on("zoom", event => {
       const { x, y, k } = event.transform;
       const sW = MAP_W * k;
-
-      // Bouclage horizontal
       const nx = ((x % sW) + sW) % sW;
 
-      // Bornes verticales : pôle Nord et pôle Sud restent dans la fenêtre
-      const minY = H - k * SOUTH_Y;   // ty minimum (pôle sud visible)
-      const maxY = -k * NORTH_Y;      // ty maximum (pôle nord visible)
-
+      const minY = mapH - k * SOUTH_Y;
+      const maxY = -k * NORTH_Y;
       let ty;
       if (minY > maxY) {
-        // Le monde entier tient dans l'écran : centrer et verrouiller
-        ty = H / 2 - k * MAP_CENTER_Y;
+        ty = mapH / 2 - k * MAP_CENTER_Y;
       } else {
-        // Zoomé : déplacement vertical libre entre les pôles
         ty = Math.max(minY, Math.min(maxY, y));
       }
 
       copies.forEach(({ g: copyG, col }) => {
         copyG.attr("transform", `translate(${nx + col * sW}, ${ty}) scale(${k})`);
       });
-      // Maintenir la taille visuelle des micro-États constante au zoom
       svg.selectAll(".microstate").attr("r", 3.5 / k).attr("stroke-width", 0.8 / k);
     });
 
+  zoomBeh = zoom;
   svg.call(zoom).on("dblclick.zoom", null);
-
-  // Position initiale : monde entier visible dès le chargement
   svg.call(zoom.transform, d3mod.zoomIdentity);
 
   document.getElementById("zoom-in").addEventListener("click", () =>
@@ -313,15 +382,30 @@ async function loadMap() {
 
   document.getElementById("map-loading").remove();
   applyColors();
+  initSearch();
 }
 
+// Zoom vers un pays depuis la recherche
+function zoomToCountry(id) {
+  const ll = countryCentroids[id];
+  if (!ll || !svgSel || !zoomBeh || !projFn || !d3lib) return;
+  const [px, py] = projFn(ll);
+  const k = 5;
+  svgSel.transition().duration(700).call(
+    zoomBeh.transform,
+    d3lib.zoomIdentity.translate(mapW / 2 - k * px, mapH / 2 - k * py).scale(k)
+  );
+}
+
+// ── Couleurs ──────────────────────────────────────────────────────────────────
 function applyColorToEl(el, id) {
   const s = allData[id]?.status || "todo";
-  el.setAttribute("fill", mapFill[s] || mapFill.todo);
+  const filtered = !activeFilters.has(s);
+  el.setAttribute("fill", filtered ? "#e8e8e4" : (mapFill[s] || mapFill.todo));
   el.setAttribute("stroke", id === selectedId ? "#333333" : "#ffffff");
   el.setAttribute("stroke-width", id === selectedId ? "1.5" : "0.6");
+  el.style.opacity = filtered ? "0.35" : "1";
 }
-// Met à jour les 3 copies d'un pays en même temps
 function applyColorById(id) {
   document.querySelectorAll(`[data-id="${id}"]`).forEach(el => applyColorToEl(el, id));
 }
@@ -329,13 +413,97 @@ function applyColors() {
   document.querySelectorAll("[data-id]").forEach(el =>
     applyColorToEl(el, el.getAttribute("data-id")));
 }
+
 function updateStats() {
+  const TOTAL = 241;
   const v = Object.values(allData);
-  document.getElementById("cnt-todo").textContent   = v.filter(x => x.status === "todo").length;
-  document.getElementById("cnt-wip").textContent    = v.filter(x => x.status === "wip").length;
-  document.getElementById("cnt-script").textContent = v.filter(x => x.status === "script").length;
-  document.getElementById("cnt-done").textContent   = v.filter(x => x.status === "done").length;
+  const counts = {
+    todo:   v.filter(x => x.status === "todo").length,
+    wip:    v.filter(x => x.status === "wip").length,
+    script: v.filter(x => x.status === "script").length,
+    done:   v.filter(x => x.status === "done").length,
+  };
+  const annotated = counts.todo + counts.wip + counts.script + counts.done;
+
+  document.getElementById("cnt-todo").textContent   = counts.todo;
+  document.getElementById("cnt-wip").textContent    = counts.wip;
+  document.getElementById("cnt-script").textContent = counts.script;
+  document.getElementById("cnt-done").textContent   = counts.done;
+
+  const lbl = document.getElementById("progress-label");
+  if (lbl) lbl.textContent = `${annotated} / ${TOTAL}`;
+
+  const bar = document.getElementById("progress-bar");
+  if (bar) {
+    bar.innerHTML = [
+      ["todo", counts.todo], ["wip", counts.wip],
+      ["script", counts.script], ["done", counts.done]
+    ].map(([s, n]) => n > 0
+      ? `<span class="pb-${s}" style="width:${n / TOTAL * 100}%"></span>` : ""
+    ).join("");
+  }
 }
+
+// ── Recherche ─────────────────────────────────────────────────────────────────
+function initSearch() {
+  const input   = document.getElementById("search-input");
+  const results = document.getElementById("search-results");
+
+  input.addEventListener("input", () => {
+    const q = input.value.trim().toLowerCase();
+    if (!q) { results.classList.remove("open"); return; }
+
+    const matches = Object.entries(NAME_MAP)
+      .filter(([, name]) => name.toLowerCase().includes(q))
+      .sort((a, b) => {
+        const al = a[1].toLowerCase().startsWith(q) ? 0 : 1;
+        const bl = b[1].toLowerCase().startsWith(q) ? 0 : 1;
+        return al - bl || a[1].localeCompare(b[1], "fr");
+      })
+      .slice(0, 8);
+
+    if (!matches.length) { results.classList.remove("open"); return; }
+
+    results.innerHTML = matches.map(([id, name]) => {
+      const s = allData[id]?.status || "todo";
+      return `<div class="sr-item" data-id="${id}">
+        <span class="sr-dot" style="background:${mapFill[s]}"></span>${name}
+      </div>`;
+    }).join("");
+    results.classList.add("open");
+
+    results.querySelectorAll(".sr-item").forEach(item => {
+      item.addEventListener("click", () => {
+        zoomToCountry(item.dataset.id);
+        input.value = "";
+        results.classList.remove("open");
+      });
+    });
+  });
+
+  document.addEventListener("click", e => {
+    if (!e.target.closest(".search-wrap")) results.classList.remove("open");
+  });
+
+  input.addEventListener("keydown", e => {
+    if (e.key === "Escape") { input.value = ""; results.classList.remove("open"); input.blur(); }
+  });
+}
+
+// ── Filtres statut ────────────────────────────────────────────────────────────
+document.querySelectorAll(".fbtn").forEach(btn => {
+  btn.addEventListener("click", () => {
+    const f = btn.dataset.f;
+    if (activeFilters.has(f)) {
+      activeFilters.delete(f);
+      btn.classList.remove("active");
+    } else {
+      activeFilters.add(f);
+      btn.classList.add("active");
+    }
+    applyColors();
+  });
+});
 
 // ── Tooltip ───────────────────────────────────────────────────────────────────
 const tt = document.getElementById("tooltip");
@@ -402,24 +570,7 @@ function openPanel(id, name) {
   applyColors();
 }
 
-function closePanel() {
-  panel.classList.add("hidden"); overlay.classList.add("hidden");
-  selectedId = null; applyColors();
-}
-
-document.getElementById("panel-close").addEventListener("click", closePanel);
-overlay.addEventListener("click", closePanel);
-
-document.querySelectorAll(".sbtn").forEach(btn => {
-  btn.addEventListener("click", () => {
-    currentStatus = btn.dataset.s;
-    document.querySelectorAll(".sbtn").forEach(b => b.classList.remove("active"));
-    btn.classList.add("active");
-    updatePanelStatusDot(currentStatus);
-  });
-});
-
-document.getElementById("panel-save").addEventListener("click", () => {
+function autoSave() {
   if (!selectedId) return;
   const entry = {
     status:   currentStatus,
@@ -433,10 +584,88 @@ document.getElementById("panel-save").addEventListener("click", () => {
   allData[selectedId] = { ...(allData[selectedId] || {}), ...entry };
   saveCountry(selectedId, allData[selectedId]);
   applyColors(); updateStats(); renderDrawer();
+}
 
+function closePanel() {
+  autoSave();
+  panel.classList.add("hidden"); overlay.classList.add("hidden");
+  selectedId = null; applyColors();
+}
+
+document.getElementById("panel-close").addEventListener("click", closePanel);
+overlay.addEventListener("click", closePanel);
+
+document.querySelectorAll(".sbtn").forEach(btn => {
+  btn.addEventListener("click", () => {
+    currentStatus = btn.dataset.s;
+    document.querySelectorAll(".sbtn").forEach(b => b.classList.remove("active"));
+    btn.classList.add("active");
+    updatePanelStatusDot(currentStatus);
+    autoSave();
+  });
+});
+
+document.getElementById("panel-save").addEventListener("click", () => {
+  if (!selectedId) return;
+  autoSave();
   const btn = document.getElementById("panel-save");
   btn.textContent = "Enregistré ✓"; btn.classList.add("saved");
   setTimeout(() => { btn.textContent = "Enregistrer"; btn.classList.remove("saved"); }, 2000);
+});
+
+// ── Raccourcis clavier ────────────────────────────────────────────────────────
+document.addEventListener("keydown", e => {
+  if (e.key === "Escape") {
+    if (!panel.classList.contains("hidden")) { closePanel(); return; }
+    const drawer = document.getElementById("list-drawer");
+    if (!drawer.classList.contains("hidden")) drawer.classList.add("hidden");
+  }
+  if (e.key === "Enter" && !panel.classList.contains("hidden") && e.target.tagName !== "TEXTAREA") {
+    e.preventDefault();
+    document.getElementById("panel-save").click();
+  }
+});
+
+// ── Menu contextuel clic droit ────────────────────────────────────────────────
+const ctxMenu = document.getElementById("ctx-menu");
+
+function showCtxMenu(event, id, name) {
+  event.preventDefault();
+  ctxMenu.dataset.id   = id;
+  ctxMenu.dataset.name = name;
+  // Positionner en évitant les bords
+  const x = Math.min(event.clientX, window.innerWidth  - 180);
+  const y = Math.min(event.clientY, window.innerHeight - 160);
+  ctxMenu.style.left = x + "px";
+  ctxMenu.style.top  = y + "px";
+  ctxMenu.classList.remove("hidden");
+}
+
+document.addEventListener("click",       () => ctxMenu.classList.add("hidden"));
+document.addEventListener("contextmenu", e => {
+  if (!e.target.closest(".country")) ctxMenu.classList.add("hidden");
+});
+
+ctxMenu.querySelectorAll(".ctx-item[data-s]").forEach(item => {
+  item.addEventListener("click", e => {
+    e.stopPropagation();
+    const id   = ctxMenu.dataset.id;
+    const name = ctxMenu.dataset.name;
+    const s    = item.dataset.s;
+    const entry = allData[id] || {};
+    allData[id] = { ...entry, status: s, editedAt: Date.now(), name };
+    saveCountry(id, allData[id]);
+    applyColorById(id); updateStats(); renderDrawer();
+    ctxMenu.classList.add("hidden");
+  });
+});
+
+document.getElementById("ctx-open").addEventListener("click", e => {
+  e.stopPropagation();
+  const id   = ctxMenu.dataset.id;
+  const name = ctxMenu.dataset.name;
+  ctxMenu.classList.add("hidden");
+  openPanel(id, name);
 });
 
 // ── Links ─────────────────────────────────────────────────────────────────────
@@ -458,13 +687,16 @@ document.getElementById("add-link-btn").addEventListener("click", () => {
   }
 });
 
-// ── Drawer ────────────────────────────────────────────────────────────────────
+// ── Drawer groupé par continent ───────────────────────────────────────────────
 const drawer = document.getElementById("list-drawer");
 document.getElementById("list-toggle-btn").addEventListener("click", () => {
   drawer.classList.toggle("hidden"); renderDrawer();
 });
 document.getElementById("drawer-close").addEventListener("click", () =>
   drawer.classList.add("hidden"));
+
+const CONTINENT_ORDER = ["Afrique", "Amér. Nord", "Amér. Sud", "Asie", "Europe", "Océanie", "Autres"];
+const STATUS_ORDER = { done: 0, script: 1, wip: 2, todo: 3 };
 
 function renderDrawer() {
   const body = document.getElementById("drawer-body");
@@ -473,17 +705,33 @@ function renderDrawer() {
     body.innerHTML = '<p style="padding:1rem 1.5rem;font-size:13px;color:#aaa">Aucun pays annoté.</p>';
     return;
   }
-  const order = { done: 0, script: 1, wip: 2, todo: 3 };
-  entries.sort((a, b) => (order[a[1].status || "todo"] ?? 3) - (order[b[1].status || "todo"] ?? 3));
-  body.innerHTML = entries.map(([id, v]) => `
-    <div class="ditem" data-id="${id}" data-name="${(v.name || id).replace(/"/g, "&quot;")}">
-      <div class="d-dot" style="background:${statusColor[v.status || "todo"]}"></div>
-      <div>
-        <div class="d-name">${v.name || id}</div>
-        ${v.artist   ? `<div class="d-artist">${v.artist}</div>` : ""}
-        ${v.category ? `<div class="d-cat">${v.category}</div>` : ""}
-      </div>
-    </div>`).join("");
+
+  entries.sort((a, b) =>
+    (STATUS_ORDER[a[1].status || "todo"] ?? 3) - (STATUS_ORDER[b[1].status || "todo"] ?? 3));
+
+  const byContinent = {};
+  entries.forEach(([id, v]) => {
+    const c = CONTINENT[id] || "Autres";
+    if (!byContinent[c]) byContinent[c] = [];
+    byContinent[c].push([id, v]);
+  });
+
+  let html = "";
+  CONTINENT_ORDER.forEach(c => {
+    if (!byContinent[c]) return;
+    html += `<div class="drawer-continent">${c} <span style="font-weight:400;opacity:0.7">(${byContinent[c].length})</span></div>`;
+    html += byContinent[c].map(([id, v]) => `
+      <div class="ditem" data-id="${id}" data-name="${(v.name || id).replace(/"/g, "&quot;")}">
+        <div class="d-dot" style="background:${statusColor[v.status || "todo"]}"></div>
+        <div>
+          <div class="d-name">${v.name || id}</div>
+          ${v.artist   ? `<div class="d-artist">${v.artist}</div>`   : ""}
+          ${v.category ? `<div class="d-cat">${v.category}</div>` : ""}
+        </div>
+      </div>`).join("");
+  });
+
+  body.innerHTML = html;
   body.querySelectorAll(".ditem").forEach(el =>
     el.addEventListener("click", () => {
       drawer.classList.add("hidden");

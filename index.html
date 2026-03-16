@@ -7,7 +7,6 @@
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600&display=swap" rel="stylesheet">
   <link rel="stylesheet" href="css/style.css" />
-  <!-- D3 et TopoJSON chargés en scripts classiques = plus fiable -->
   <script src="https://cdnjs.cloudflare.com/ajax/libs/d3/7.9.0/d3.min.js"></script>
   <script src="https://cdnjs.cloudflare.com/ajax/libs/topojson/3.0.2/topojson.min.js"></script>
 </head>
@@ -41,8 +40,14 @@
           <path d="M18 1.5 Q13 9 13 18 Q13 27 18 34.5" stroke="currentColor" stroke-width="0.8" opacity="0.5" fill="none"/>
         </svg>
         <span class="header-title">MAP <span class="header-sub">— Musique À Part</span></span>
+        <div class="search-wrap">
+          <svg class="search-icon" width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round"><circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/></svg>
+          <input id="search-input" type="text" placeholder="Rechercher un pays…" autocomplete="off" />
+          <div id="search-results"></div>
+        </div>
       </div>
       <div class="header-right">
+        <span id="progress-label" class="progress-label">0 / 241</span>
         <div class="stat-pill"><span class="dot dot-todo"></span><span id="cnt-todo">0</span></div>
         <div class="stat-pill"><span class="dot dot-wip"></span><span id="cnt-wip">0</span></div>
         <div class="stat-pill"><span class="dot dot-script"></span><span id="cnt-script">0</span></div>
@@ -54,6 +59,10 @@
         <button class="logout-btn" id="logout-btn">Déconnexion</button>
       </div>
     </header>
+
+    <div id="progress-bar-wrap">
+      <div id="progress-bar"></div>
+    </div>
 
     <main>
       <div id="map-wrapper">
@@ -71,6 +80,12 @@
         <span class="leg"><span class="dot dot-wip"></span>Piste en cours</span>
         <span class="leg"><span class="dot dot-script"></span>Artiste choisi</span>
         <span class="leg"><span class="dot dot-done"></span>Prêt à tourner</span>
+        <span class="leg-sep"></span>
+        <span class="leg-filter-label">Filtres :</span>
+        <button class="fbtn active" data-f="todo"><span class="dot dot-todo"></span></button>
+        <button class="fbtn active" data-f="wip"><span class="dot dot-wip"></span></button>
+        <button class="fbtn active" data-f="script"><span class="dot dot-script"></span></button>
+        <button class="fbtn active" data-f="done"><span class="dot dot-done"></span></button>
         <span class="leg-sep"></span>
         <span class="leg-hint">Scroll · Glisser · Cliquer</span>
       </div>
@@ -132,9 +147,18 @@
       <div class="drawer-head"><span>Pays annotés</span><button id="drawer-close">×</button></div>
       <div id="drawer-body"></div>
     </div>
+
+    <!-- Menu contextuel clic droit -->
+    <div id="ctx-menu" class="hidden">
+      <div class="ctx-item" data-s="todo"><span class="dot dot-todo"></span>À explorer</div>
+      <div class="ctx-item" data-s="wip"><span class="dot dot-wip"></span>Piste en cours</div>
+      <div class="ctx-item" data-s="script"><span class="dot dot-script"></span>Artiste choisi</div>
+      <div class="ctx-item" data-s="done"><span class="dot dot-done"></span>Prêt à tourner</div>
+      <div class="ctx-sep"></div>
+      <div class="ctx-item ctx-open" id="ctx-open">Ouvrir la fiche →</div>
+    </div>
   </div>
 
-  <!-- Firebase en module, app.js en module -->
   <script type="module" src="js/app.js"></script>
 </body>
 </html>
