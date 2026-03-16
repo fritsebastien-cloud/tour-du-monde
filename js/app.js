@@ -190,36 +190,56 @@ async function loadMap() {
     .translate([W / 2, H / 2]);
   const path = d3mod.geoPath().projection(projection);
 
-  // Pays
-  topomod.feature(world, world.objects.countries).features.forEach(f => {
-    const id = String(f.id).padStart(3, "0");
-    const name = NAME_MAP[id];
-    if (!name) return;
-    const d = path(f.geometry);
-    if (!d) return;
-    g.append("path")
-      .attr("d", d)
-      .attr("data-id", id)
-      .attr("data-name", name)
-      .attr("class", "country")
-      .attr("fill", mapFill.todo)
-      .attr("stroke", "#ffffff")
-      .attr("stroke-width", 0.6)
-      .on("mouseenter", function(event) {
-        showTooltip(event, id, name);
-        const s = allData[id]?.status || "todo";
-        d3mod.select(this).attr("fill", mapHover[s] || mapHover.todo);
-      })
-      .on("mousemove", moveTooltip)
-      .on("mouseleave", function() { hideTooltip(); applyColorToEl(this, id); })
-      .on("click", () => openPanel(id, name));
+  // Largeur en pixels du monde entier à l'échelle 1
+  const MAP_W = projection([180, 0])[0] - projection([-180, 0])[0];
+
+  // 3 copies côte à côte pour le défilement infini (-1, 0, +1)
+  const copies = [-1, 0, 1].map(offset => {
+    return g.append("g")
+      .attr("class", "map-copy")
+      .attr("transform", `translate(${offset * MAP_W}, 0)`);
   });
 
-  // Zoom — translateExtent retiré pour défilement horizontal libre
+  // Rendu des pays dans chaque copie
+  const features = topomod.feature(world, world.objects.countries).features;
+  copies.forEach(copyG => {
+    features.forEach(f => {
+      const id = String(f.id).padStart(3, "0");
+      const name = NAME_MAP[id];
+      if (!name) return;
+      const d = path(f.geometry);
+      if (!d) return;
+      copyG.append("path")
+        .attr("d", d)
+        .attr("data-id", id)
+        .attr("data-name", name)
+        .attr("class", "country")
+        .attr("fill", mapFill.todo)
+        .attr("stroke", "#ffffff")
+        .attr("stroke-width", 0.6)
+        .on("mouseenter", function(event) {
+          showTooltip(event, id, name);
+          const s = allData[id]?.status || "todo";
+          // Hover sur les 3 copies à la fois
+          d3mod.selectAll(`[data-id="${id}"]`).attr("fill", mapHover[s] || mapHover.todo);
+        })
+        .on("mousemove", moveTooltip)
+        .on("mouseleave", () => { hideTooltip(); applyColorById(id); })
+        .on("click", () => openPanel(id, name));
+    });
+  });
+
+  // Zoom avec bouclage horizontal infini
   const zoom = d3mod.zoom()
-    .scaleExtent([0.6, 14])
+    .scaleExtent([0.5, 14])
     .on("zoom", event => {
-      g.attr("transform", event.transform);
+      const { x, y, k } = event.transform;
+      const scaledW = MAP_W * k;
+      // Normalise x pour boucler sans jamais voir de bord
+      const nx = ((x % scaledW) + scaledW) % scaledW;
+      copies.forEach((copyG, i) => {
+        copyG.attr("transform", `translate(${nx + (i - 1) * scaledW}, ${y}) scale(${k})`);
+      });
     });
 
   svg.call(zoom).on("dblclick.zoom", null);
@@ -240,6 +260,10 @@ function applyColorToEl(el, id) {
   el.setAttribute("fill", mapFill[s] || mapFill.todo);
   el.setAttribute("stroke", id === selectedId ? "#333333" : "#ffffff");
   el.setAttribute("stroke-width", id === selectedId ? "1.5" : "0.6");
+}
+// Met à jour les 3 copies d'un pays en même temps
+function applyColorById(id) {
+  document.querySelectorAll(`[data-id="${id}"]`).forEach(el => applyColorToEl(el, id));
 }
 function applyColors() {
   document.querySelectorAll("[data-id]").forEach(el =>
