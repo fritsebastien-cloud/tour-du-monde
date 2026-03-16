@@ -232,21 +232,31 @@ async function loadMap() {
   // Centre vertical du contenu carte (en coordonnées de projection)
   const MAP_CENTER_Y = (NORTH_Y + SOUTH_Y) / 2;
 
-  // Zoom : bouclage horizontal infini, Y totalement verrouillé
+  // Zoom : bouclage horizontal infini, Y libre quand zoomé / centré quand dézoomé
   const zoom = d3mod.zoom()
     .scaleExtent([0.8, 14])
     .on("zoom", event => {
-      const { x, k } = event.transform;
+      const { x, y, k } = event.transform;
       const sW = MAP_W * k;
 
-      // Bouclage horizontal uniquement
+      // Bouclage horizontal
       const nx = ((x % sW) + sW) % sW;
 
-      // Y fixe dynamique : maintient le centre de la carte au centre de l'écran quel que soit k
-      const fixedY = H / 2 - k * MAP_CENTER_Y;
+      // Bornes verticales : pôle Nord et pôle Sud restent dans la fenêtre
+      const minY = H - k * SOUTH_Y;   // ty minimum (pôle sud visible)
+      const maxY = -k * NORTH_Y;      // ty maximum (pôle nord visible)
+
+      let ty;
+      if (minY > maxY) {
+        // Le monde entier tient dans l'écran : centrer et verrouiller
+        ty = H / 2 - k * MAP_CENTER_Y;
+      } else {
+        // Zoomé : déplacement vertical libre entre les pôles
+        ty = Math.max(minY, Math.min(maxY, y));
+      }
 
       copies.forEach(({ g: copyG, col }) => {
-        copyG.attr("transform", `translate(${nx + col * sW}, ${fixedY}) scale(${k})`);
+        copyG.attr("transform", `translate(${nx + col * sW}, ${ty}) scale(${k})`);
       });
     });
 
