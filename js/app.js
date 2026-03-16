@@ -190,20 +190,16 @@ async function loadMap() {
     .translate([W / 2, H / 2]);
   const path = d3mod.geoPath().projection(projection);
 
-  // Dimensions du monde en pixels à l'échelle 1
-  const MAP_W = projection([180, 0])[0]  - projection([-180, 0])[0];
-  const MAP_H = projection([0, -90])[1]  - projection([0,  90])[1];
+  // Largeur du monde en pixels à l'échelle 1
+  const MAP_W    = projection([180, 0])[0] - projection([-180, 0])[0];
+  const NORTH_Y  = projection([0,  90])[1]; // y du pôle Nord
+  const SOUTH_Y  = projection([0, -90])[1]; // y du pôle Sud
 
-  // Grille 3×3 pour bouclage infini horizontal ET vertical
-  const copies = [];
-  for (let row = -1; row <= 1; row++) {
-    for (let col = -1; col <= 1; col++) {
-      copies.push({
-        g: g.append("g").attr("class", "map-copy"),
-        col, row
-      });
-    }
-  }
+  // 3 copies côte à côte — bouclage horizontal uniquement (géographiquement correct)
+  const copies = [-1, 0, 1].map(col => ({
+    g: g.append("g").attr("class", "map-copy"),
+    col
+  }));
 
   // Rendu des pays dans chaque copie
   const features = topomod.feature(world, world.objects.countries).features;
@@ -233,18 +229,23 @@ async function loadMap() {
     });
   });
 
-  // Zoom avec bouclage infini horizontal ET vertical
+  // Zoom : bouclage horizontal infini, Y limité aux pôles
   const zoom = d3mod.zoom()
     .scaleExtent([0.5, 14])
     .on("zoom", event => {
       const { x, y, k } = event.transform;
       const sW = MAP_W * k;
-      const sH = MAP_H * k;
+
+      // Bouclage horizontal
       const nx = ((x % sW) + sW) % sW;
-      const ny = ((y % sH) + sH) % sH;
-      copies.forEach(({ g: copyG, col, row }) => {
-        copyG.attr("transform",
-          `translate(${nx + col * sW}, ${ny + row * sH}) scale(${k})`);
+
+      // Limites verticales : empêche de scrolller au-delà des pôles
+      const minY = H * 0.9 - k * SOUTH_Y;
+      const maxY = H * 0.1 - k * NORTH_Y;
+      const clampedY = Math.min(maxY, Math.max(minY, y));
+
+      copies.forEach(({ g: copyG, col }) => {
+        copyG.attr("transform", `translate(${nx + col * sW}, ${clampedY}) scale(${k})`);
       });
     });
 
