@@ -186,7 +186,7 @@ async function loadMap() {
   const g = svg.select("#countries-group");
 
   const projection = d3mod.geoNaturalEarth1()
-    .scale(W / 3.2)
+    .scale(W / 5.5)
     .translate([W / 2, H / 2]);
   const path = d3mod.geoPath().projection(projection);
 
@@ -234,7 +234,7 @@ async function loadMap() {
 
   // Zoom : bouclage horizontal infini, Y totalement verrouillé
   const zoom = d3mod.zoom()
-    .scaleExtent([0.5, 14])
+    .scaleExtent([0.8, 14])
     .on("zoom", event => {
       const { x, k } = event.transform;
       const sW = MAP_W * k;
