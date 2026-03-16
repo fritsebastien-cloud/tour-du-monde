@@ -34,7 +34,7 @@ const statusLabel = {
 const statusColor = {
   todo:   "#4a4a44",
   wip:    "#F5A623",
-  script: "#5b7cf7",
+  script: "#f564a9",
   done:   "#4ADE80"
 };
 
@@ -42,13 +42,13 @@ const statusColor = {
 const mapFill = {
   todo:   "#ddddd8",
   wip:    "#f5c96a",
-  script: "#8fb4f5",
+  script: "#f59dc8",
   done:   "#72cc92"
 };
 const mapHover = {
   todo:   "#c8c8c2",
   wip:    "#e8b84e",
-  script: "#6d9ee8",
+  script: "#e87ab0",
   done:   "#55bb78"
 };
 
