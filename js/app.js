@@ -26,8 +26,8 @@ let currentLinks = [];
 const statusLabel = {
   todo:   "À explorer",
   wip:    "Piste en cours",
-  script: "Script fini",
-  done:   "En ligne"
+  script: "Artiste choisi",
+  done:   "Prêt à tourner"
 };
 
 // Couleurs des points dans les listes/drawer
