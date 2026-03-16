@@ -57,9 +57,9 @@ const NAME_MAP = {
   "450":"Madagascar","454":"Malawi","466":"Mali","478":"Mauritanie","480":"Maurice",
   "504":"Maroc","508":"Mozambique","516":"Namibie","562":"Niger","566":"Nigéria",
   "646":"Rwanda","678":"Sao Tomé-et-Principe","686":"Sénégal","694":"Sierra Leone",
-  "706":"Somalie","710":"Afrique du Sud","729":"Soudan du Sud","736":"Soudan",
-  "748":"Eswatini","768":"Togo","788":"Tunisie","800":"Ouganda","894":"Zambie",
-  "716":"Zimbabwe","690":"Seychelles","732":"Sahara occidental",
+  "706":"Somalie","710":"Afrique du Sud","728":"Soudan du Sud","729":"Soudan",
+  "748":"Eswatini","768":"Togo","788":"Tunisie","800":"Ouganda","834":"Tanzanie",
+  "894":"Zambie","716":"Zimbabwe","732":"Sahara occidental","238":"Îles Malouines",
   // Amérique du Nord et Centrale
   "028":"Antigua-et-Barbuda","044":"Bahamas","084":"Belize","124":"Canada",
   "188":"Costa Rica","192":"Cuba","212":"Dominique","214":"Rép. dominicaine",
@@ -99,7 +99,7 @@ const NAME_MAP = {
   "598":"Papouasie-Nvl-Guinée","882":"Samoa","776":"Tonga","798":"Tuvalu",
   "548":"Vanuatu","258":"Polynésie française","540":"Nouvelle-Calédonie",
   // Autres
-  "010":"Antarctique"
+  "010":"Antarctique","260":"Terres australes françaises"
 };
 
 // ── Thème ──────────────────────────────────────────────────────────────────────
