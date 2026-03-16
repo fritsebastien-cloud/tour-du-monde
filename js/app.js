@@ -311,8 +311,6 @@ async function loadMap() {
         .attr("data-name", name)
         .attr("class", "country")
         .attr("fill", mapFill.todo)
-        .attr("stroke", "#ffffff")
-        .attr("stroke-width", 0.6)
         .on("mouseenter", function(event) {
           showTooltip(event, id, name);
           const s = allData[id]?.status || "todo";
@@ -334,7 +332,6 @@ async function loadMap() {
         .attr("data-id", id).attr("data-name", name)
         .attr("class", "country microstate")
         .attr("fill", mapFill.todo)
-        .attr("stroke", "#ffffff").attr("stroke-width", 0.8)
         .on("mouseenter", function(event) {
           showTooltip(event, id, name);
           const s = allData[id]?.status || "todo";
@@ -402,8 +399,6 @@ function applyColorToEl(el, id) {
   const s = allData[id]?.status || null;
   const filtered = s && !activeFilters.has(s);
   el.setAttribute("fill", filtered ? "#e8e8e4" : (mapFill[s] || mapFill["todo"]));
-  el.setAttribute("stroke", id === selectedId ? "#333333" : "#ffffff");
-  el.setAttribute("stroke-width", id === selectedId ? "1.5" : "0.6");
   el.style.opacity = filtered ? "0.35" : "1";
 }
 function applyColorById(id) {
@@ -562,6 +557,9 @@ function openPanel(id, name) {
         { day: "numeric", month: "long", hour: "2-digit", minute: "2-digit" })
     : "";
 
+  document.querySelectorAll(".country.selected").forEach(el => el.classList.remove("selected"));
+  document.querySelectorAll(`[data-id="${id}"]`).forEach(el => el.classList.add("selected"));
+
   panel.classList.remove("hidden");
   overlay.classList.remove("hidden");
   applyColors();
@@ -596,6 +594,7 @@ function autoSave() {
 
 function closePanel() {
   autoSave();
+  document.querySelectorAll(".country.selected").forEach(el => el.classList.remove("selected"));
   panel.classList.add("hidden"); overlay.classList.add("hidden");
   selectedId = null; applyColors();
 }
