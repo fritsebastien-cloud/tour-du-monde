@@ -1210,3 +1210,147 @@ document.getElementById("sort-save").addEventListener("click", () => {
   btn.textContent = "Enregistré ✓"; btn.classList.add("saved");
   setTimeout(() => { btn.textContent = "Enregistrer l'ordre"; btn.classList.remove("saved"); }, 2000);
 });
+
+// ── Mobile drawer ────────────────────────────────────────────────────────────
+(function initMobileDrawer() {
+  const menuBtn       = document.getElementById("mobile-menu-btn");
+  const mDrawer       = document.getElementById("mobile-drawer");
+  const mOverlay      = document.getElementById("mobile-drawer-overlay");
+  const mCloseBtn     = document.getElementById("mobile-drawer-close");
+  if (!menuBtn) return;
+
+  function openMobileDrawer() {
+    mDrawer.classList.remove("hidden");
+    mOverlay.classList.remove("hidden");
+  }
+  function closeMobileDrawer() {
+    mDrawer.classList.add("hidden");
+    mOverlay.classList.add("hidden");
+  }
+
+  menuBtn.addEventListener("click", openMobileDrawer);
+  mCloseBtn.addEventListener("click", closeMobileDrawer);
+  mOverlay.addEventListener("click", closeMobileDrawer);
+
+  // Sync mobile stats when desktop stats change
+  const origUpdateCounts = window._updateCounts;
+  function syncMobileStats() {
+    const mlbl = document.getElementById("mobile-progress-label");
+    const dlbl = document.getElementById("progress-label");
+    if (mlbl && dlbl) mlbl.textContent = dlbl.textContent;
+    ["wip", "script", "done"].forEach(s => {
+      const src = document.getElementById("cnt-" + s);
+      const dst = document.getElementById("mobile-cnt-" + s);
+      if (src && dst) dst.textContent = src.textContent;
+    });
+  }
+  // Observe desktop counters for text changes
+  ["cnt-wip", "cnt-script", "cnt-done", "progress-label"].forEach(id => {
+    const el = document.getElementById(id);
+    if (el) new MutationObserver(syncMobileStats).observe(el, { childList: true, characterData: true, subtree: true });
+  });
+
+  // Mobile search
+  const mInput   = document.getElementById("mobile-search-input");
+  const mResults = document.getElementById("mobile-search-results");
+  if (mInput && mResults) {
+    mInput.addEventListener("input", () => {
+      const q = mInput.value.trim().toLowerCase();
+      if (!q) { mResults.classList.remove("open"); return; }
+      const matches = Object.entries(NAME_MAP)
+        .filter(([, name]) => name.toLowerCase().includes(q))
+        .sort((a, b) => {
+          const al = a[1].toLowerCase().startsWith(q) ? 0 : 1;
+          const bl = b[1].toLowerCase().startsWith(q) ? 0 : 1;
+          return al - bl || a[1].localeCompare(b[1], "fr");
+        })
+        .slice(0, 8);
+      if (!matches.length) { mResults.classList.remove("open"); return; }
+      mResults.innerHTML = matches.map(([id, name]) => {
+        const s = allData[id]?.status || "todo";
+        return `<div class="sr-item" data-id="${id}">
+          <span class="sr-dot" style="background:${mapFill[s]}"></span>${name}
+        </div>`;
+      }).join("");
+      mResults.classList.add("open");
+      mResults.querySelectorAll(".sr-item").forEach(item => {
+        item.addEventListener("click", () => {
+          zoomToCountry(item.dataset.id);
+          mInput.value = "";
+          mResults.classList.remove("open");
+          closeMobileDrawer();
+        });
+      });
+    });
+    mInput.addEventListener("keydown", e => {
+      if (e.key === "Escape") { mInput.value = ""; mResults.classList.remove("open"); mInput.blur(); }
+    });
+  }
+
+  // Mobile filter buttons
+  document.querySelectorAll("[data-mf]").forEach(btn => {
+    btn.addEventListener("click", () => {
+      const f = btn.dataset.mf;
+      if (activeFilters.has(f)) { activeFilters.delete(f); btn.classList.remove("active"); }
+      else { activeFilters.add(f); btn.classList.add("active"); }
+      // Sync desktop filter buttons
+      document.querySelectorAll(`.fbtn[data-f="${f}"]`).forEach(db => db.classList.toggle("active", activeFilters.has(f)));
+      filterStagger = true; applyColors(); filterStagger = false;
+    });
+  });
+
+  // Mobile theme toggle
+  const mThemeBtn = document.getElementById("mobile-theme-btn");
+  if (mThemeBtn) {
+    mThemeBtn.addEventListener("click", () => {
+      applyTheme(!document.body.classList.contains("dark"));
+      // Sync mobile theme icons
+      const dark = document.body.classList.contains("dark");
+      mThemeBtn.querySelector(".m-icon-sun").style.display  = dark ? "none" : "";
+      mThemeBtn.querySelector(".m-icon-moon").style.display = dark ? "" : "none";
+    });
+  }
+
+  // Mobile list/sort buttons
+  const mListBtn = document.getElementById("mobile-list-btn");
+  const mSortBtn = document.getElementById("mobile-sort-btn");
+  if (mListBtn) mListBtn.addEventListener("click", () => { closeMobileDrawer(); openDrawer(); });
+  if (mSortBtn) mSortBtn.addEventListener("click", () => { closeMobileDrawer(); openSortModal(); });
+
+  // Mobile logout
+  const mLogout = document.getElementById("mobile-logout-btn");
+  if (mLogout) mLogout.addEventListener("click", () => { sessionStorage.removeItem("tdc_auth"); location.reload(); });
+
+  // Swipe down to close bottom sheets on mobile
+  function addSwipeToDismiss(el, closeFn) {
+    let startY = 0, currentY = 0, dragging = false;
+    el.addEventListener("touchstart", e => {
+      if (el.scrollTop > 5) return;
+      startY = e.touches[0].clientY; currentY = startY; dragging = true;
+    }, { passive: true });
+    el.addEventListener("touchmove", e => {
+      if (!dragging) return;
+      currentY = e.touches[0].clientY;
+      const dy = currentY - startY;
+      if (dy > 0) el.style.transform = `translateY(${dy}px)`;
+    }, { passive: true });
+    el.addEventListener("touchend", () => {
+      if (!dragging) return;
+      dragging = false;
+      const dy = currentY - startY;
+      if (dy > 100) { closeFn(); }
+      el.style.transform = "";
+    });
+  }
+
+  addSwipeToDismiss(document.getElementById("panel"), closePanel);
+  addSwipeToDismiss(document.getElementById("list-drawer"), closeDrawer);
+  addSwipeToDismiss(document.getElementById("sort-modal"), closeSortModal);
+
+  // Sync initial theme icons on mobile
+  const dark = document.body.classList.contains("dark");
+  if (mThemeBtn) {
+    mThemeBtn.querySelector(".m-icon-sun").style.display  = dark ? "none" : "";
+    mThemeBtn.querySelector(".m-icon-moon").style.display = dark ? "" : "none";
+  }
+})();
