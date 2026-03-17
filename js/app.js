@@ -683,21 +683,28 @@ function renderFloatingCountry(id) {
   const feature = geoFeatures.find(f => String(f.id).padStart(3, "0") === id);
   if (!feature || !d3lib) { floatEl.classList.remove("visible"); return; }
 
-  const SIZE = 260, PAD = 26;
-  let proj, dStr;
+  // Rendu à haute résolution puis on lit les bounds réels en pixels
+  // → garantit la même taille visuelle pour tous les pays (Russie, France, Vatican…)
+  const RENDER = 1200, PAD = 48;
+  let dStr, viewBox;
   try {
-    proj  = d3lib.geoNaturalEarth1().fitExtent([[PAD, PAD], [SIZE - PAD, SIZE - PAD]], feature);
-    dStr  = d3lib.geoPath(proj)(feature);
+    const proj   = d3lib.geoNaturalEarth1().fitSize([RENDER, RENDER], feature);
+    const pathFn = d3lib.geoPath(proj);
+    dStr = pathFn(feature);
+    const [[x0, y0], [x1, y1]] = pathFn.bounds(feature);
+    if (!isFinite(x0) || x1 <= x0 || y1 <= y0) throw new Error("invalid bounds");
+    viewBox = `${x0 - PAD} ${y0 - PAD} ${x1 - x0 + PAD * 2} ${y1 - y0 + PAD * 2}`;
   } catch(e) { floatEl.classList.remove("visible"); return; }
   if (!dStr || dStr.length < 6) { floatEl.classList.remove("visible"); return; }
 
+  const SVG = 260;
   const s    = allData[id]?.status || null;
   const dark = document.body.classList.contains("dark");
   const fill = (dark ? mapFillDark : mapFill)[s] || (dark ? mapFillDark : mapFill).todo;
   const rgb  = (glowRGB[s || "todo"] || glowRGB.todo)[dark ? "dark" : "light"];
 
   floatEl.innerHTML = `
-    <svg viewBox="0 0 ${SIZE} ${SIZE}" width="${SIZE}" height="${SIZE}" overflow="visible" xmlns="http://www.w3.org/2000/svg">
+    <svg viewBox="${viewBox}" width="${SVG}" height="${SVG}" overflow="visible" xmlns="http://www.w3.org/2000/svg">
       <defs>
         <filter id="float-shadow" x="-40%" y="-30%" width="180%" height="220%">
           <feDropShadow dx="0" dy="22" stdDeviation="18" flood-color="rgb(${rgb})" flood-opacity="0.52"/>
