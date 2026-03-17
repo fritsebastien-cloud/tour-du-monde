@@ -622,10 +622,21 @@ body.dark .d-cat { color: rgba(255,255,255,0.18); }
 }
 body.dark #country-hero { border-bottom-color: rgba(255,255,255,0.06); }
 
+/* Fond flou artiste */
+#hero-bg {
+  position: absolute; inset: -24px; z-index: 0;
+  background-size: cover; background-position: center top;
+  filter: blur(20px);
+  opacity: 0;
+  transition: opacity 0.6s ease;
+}
+#hero-bg.visible { opacity: 0.6; }
+body:not(.dark) #hero-bg.visible { opacity: 0.45; }
+
 /* Zone de la forme — centrée, couvre tout le hero */
 #country-shape-area {
   position: absolute;
-  inset: 0;
+  inset: 0; z-index: 1;
   display: flex;
   align-items: center;
   justify-content: center;
@@ -643,18 +654,25 @@ body.dark #country-hero { border-bottom-color: rgba(255,255,255,0.06); }
 #country-hero::after {
   content: '';
   position: absolute;
-  inset: 0;
+  inset: 0; z-index: 2;
   pointer-events: none;
-  background: linear-gradient(to bottom, transparent 30%, rgba(0,0,0,0.55) 100%);
+  background: linear-gradient(to bottom, transparent 20%, rgba(0,0,0,0.62) 100%);
+  transition: background 0.4s;
 }
 body:not(.dark) #country-hero::after {
-  background: linear-gradient(to bottom, transparent 30%, rgba(255,255,255,0.75) 100%);
+  background: linear-gradient(to bottom, transparent 20%, rgba(255,255,255,0.8) 100%);
+}
+#country-hero.has-photo::after {
+  background: linear-gradient(to bottom, rgba(0,0,0,0.15) 0%, rgba(0,0,0,0.72) 100%);
+}
+body:not(.dark) #country-hero.has-photo::after {
+  background: linear-gradient(to bottom, rgba(0,0,0,0.05) 0%, rgba(0,0,0,0.55) 100%);
 }
 
 /* Texte overlay */
 .hero-text {
   position: relative;
-  z-index: 2;
+  z-index: 3;
   flex: 1;
   min-width: 0;
 }
@@ -666,6 +684,7 @@ body:not(.dark) #country-hero::after {
   text-shadow: 0 1px 8px rgba(0,0,0,0.4);
 }
 body:not(.dark) #country-hero .panel-name { color: #1a1a1a; text-shadow: none; }
+body:not(.dark) #country-hero.has-photo .panel-name { color: #fff; text-shadow: 0 1px 8px rgba(0,0,0,0.5); }
 
 #country-hero .panel-status-lbl {
   font-size: 11px;
@@ -674,13 +693,14 @@ body:not(.dark) #country-hero .panel-name { color: #1a1a1a; text-shadow: none; }
   letter-spacing: 0.04em;
 }
 body:not(.dark) #country-hero .panel-status-lbl { color: #999; }
+body:not(.dark) #country-hero.has-photo .panel-status-lbl { color: rgba(255,255,255,0.7); }
 
 /* Bouton close repositionné en haut à droite du hero */
 #country-hero .btn-close {
   position: absolute;
   top: 12px;
   right: 12px;
-  z-index: 2;
+  z-index: 3;
 }
 
 @keyframes countryFloat3D {
@@ -722,16 +742,15 @@ body.dark .ctx-sep { background: rgba(255,255,255,0.07); }
 #artist-photo-wrap { margin-top: 10px; }
 
 #artist-photo-selected {
-  display: flex; align-items: center; gap: 10px; margin-bottom: 8px;
+  display: flex; align-items: center; gap: 8px; margin-top: 8px;
 }
-#artist-photo-img {
-  width: 56px; height: 56px; border-radius: 8px; object-fit: cover;
-  border: 1px solid rgba(0,0,0,0.1); flex-shrink: 0;
+#artist-photo-badge {
+  font-size: 11px; color: #4caf7d; letter-spacing: 0.02em;
 }
-body.dark #artist-photo-img { border-color: rgba(255,255,255,0.1); }
+body.dark #artist-photo-badge { color: #5dd48e; }
 #artist-photo-clear {
-  background: none; border: none; color: #ccc; cursor: pointer;
-  font-size: 18px; padding: 2px 6px; line-height: 1; transition: color 0.1s;
+  background: none; border: none; color: #bbb; cursor: pointer;
+  font-size: 11px; padding: 0; text-decoration: underline; transition: color 0.1s;
 }
 #artist-photo-clear:hover { color: #e05252; }
 
