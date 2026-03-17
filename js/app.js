@@ -65,6 +65,25 @@ const mapHover = {
   script: "#e87ab0",
   done:   "#55bb78"
 };
+// Couleurs pour le mode sombre cinématique
+const mapFillDark = {
+  todo:   "#17202e",
+  wip:    "#c47a10",
+  script: "#b04080",
+  done:   "#2a7a50"
+};
+const mapHoverDark = {
+  todo:   "#1e2a3e",
+  wip:    "#d98e18",
+  script: "#c84e92",
+  done:   "#349260"
+};
+const mapStrokeDark = {
+  todo:   "#2e3e58",
+  wip:    "#f0a030",
+  script: "#e060a0",
+  done:   "#40b068"
+};
 
 // Continents pour le drawer
 const CONTINENT = {
@@ -206,9 +225,12 @@ function applyTheme(dark) {
   sunIcon.style.display  = dark ? "none" : "";
   moonIcon.style.display = dark ? "" : "none";
   localStorage.setItem("tdc_theme", dark ? "dark" : "light");
+  // Mettre à jour les couleurs de la carte selon le thème
+  if (document.getElementById("countries-group").children.length > 0) applyColors();
 }
+// Dark par défaut sauf si l'utilisateur a explicitement choisi le mode clair
 const savedTheme = localStorage.getItem("tdc_theme");
-applyTheme(savedTheme === "dark");
+applyTheme(savedTheme !== "light");
 themeBtn.addEventListener("click", () => applyTheme(!document.body.classList.contains("dark")));
 
 // ── Login ─────────────────────────────────────────────────────────────────────
@@ -296,6 +318,17 @@ async function loadMap() {
     col
   }));
 
+  // Graticule (lignes lat/lon) dans chaque copie
+  const graticule = d3mod.geoGraticule().step([30, 30]);
+  copies.forEach(({ g: copyG }) => {
+    copyG.insert("path", ":first-child")
+      .datum(graticule())
+      .attr("d", path)
+      .attr("fill", "none")
+      .attr("class", "graticule-line")
+      .attr("stroke-width", 0.35);
+  });
+
   const features = topomod.feature(world, world.objects.countries).features;
 
   // Centroids géographiques pour la recherche
@@ -322,9 +355,12 @@ async function loadMap() {
         .on("mouseenter", function(event) {
           showTooltip(event, id, name);
           const s = allData[id]?.status || null;
+          const dark = document.body.classList.contains("dark");
+          const hovers  = dark ? mapHoverDark  : mapHover;
+          const strokes = dark ? mapStrokeDark : mapStroke;
           d3mod.selectAll(`[data-id="${id}"]`)
-            .attr("fill", mapHover[s] || mapHover.todo)
-            .attr("stroke", mapStroke[s] || mapStroke.todo)
+            .attr("fill", hovers[s]  || hovers.todo)
+            .attr("stroke", strokes[s] || strokes.todo)
             .attr("stroke-width", 1.2);
         })
         .on("mousemove", moveTooltip)
@@ -350,9 +386,12 @@ async function loadMap() {
         .on("mouseenter", function(event) {
           showTooltip(event, id, name);
           const s = allData[id]?.status || null;
+          const dark = document.body.classList.contains("dark");
+          const hovers  = dark ? mapHoverDark  : mapHover;
+          const strokes = dark ? mapStrokeDark : mapStroke;
           d3mod.selectAll(`[data-id="${id}"]`)
-            .attr("fill", mapHover[s] || mapHover.todo)
-            .attr("stroke", mapStroke[s] || mapStroke.todo)
+            .attr("fill", hovers[s]  || hovers.todo)
+            .attr("stroke", strokes[s] || strokes.todo)
             .attr("stroke-width", 1.2);
         })
         .on("mousemove", moveTooltip)
@@ -402,6 +441,10 @@ async function loadMap() {
   document.getElementById("map-loading").remove();
   applyColors();
   initSearch();
+  // Fade-in cinématique des pays
+  requestAnimationFrame(() => setTimeout(() => {
+    document.getElementById("countries-group").classList.add("loaded");
+  }, 60));
 }
 
 // Zoom vers un pays depuis la recherche
@@ -420,8 +463,10 @@ function zoomToCountry(id) {
 function applyColorToEl(el, id) {
   const s = allData[id]?.status || null;
   const filtered = s && !activeFilters.has(s);
-  el.setAttribute("fill", filtered ? "#e8e8e4" : (mapFill[s] || mapFill["todo"]));
-  el.style.opacity = filtered ? "0.35" : "1";
+  const dark = document.body.classList.contains("dark");
+  const fills = dark ? mapFillDark : mapFill;
+  el.setAttribute("fill", filtered ? (dark ? "#111827" : "#e8e8e4") : (fills[s] || fills.todo));
+  el.style.opacity = filtered ? "0.3" : "1";
 }
 function applyColorById(id) {
   document.querySelectorAll(`[data-id="${id}"]`).forEach(el => applyColorToEl(el, id));
