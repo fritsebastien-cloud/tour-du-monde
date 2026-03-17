@@ -29,6 +29,10 @@ let geoFeatures = [];
 let svgSel = null, zoomBeh = null, projFn = null;
 let mapW = 0, mapH = 0;
 const countryCentroids = {};
+let ringsCopies   = [];   // groupes SVG des pulse rings par copie
+let labelsCopies  = [];   // groupes SVG des labels par copie
+let currentZoomK  = 1;    // niveau de zoom actuel
+let filterStagger = false; // stagger lors du toggle filtre
 
 // Filtres actifs par statut
 const activeFilters = new Set(["todo", "wip", "script", "done"]);
@@ -227,8 +231,16 @@ function applyTheme(dark) {
   sunIcon.style.display  = dark ? "none" : "";
   moonIcon.style.display = dark ? "" : "none";
   localStorage.setItem("tdc_theme", dark ? "dark" : "light");
-  // Mettre à jour les couleurs de la carte selon le thème
-  if (document.getElementById("countries-group").children.length > 0) applyColors();
+  if (document.getElementById("countries-group").children.length > 0) {
+    applyColors();
+    if (d3lib) {
+      d3lib.selectAll(".ocean-sphere").attr("fill", dark ? "#0d1e38" : "#c8dff5");
+      d3lib.selectAll(".pulse-ring").attr("stroke", dark ? "#4ADE80" : "#38a060");
+      d3lib.selectAll(".country-label")
+        .attr("fill",   dark ? "rgba(255,255,255,0.8)"  : "rgba(20,20,20,0.75)")
+        .attr("stroke", dark ? "rgba(6,8,17,0.85)"      : "rgba(255,255,255,0.92)");
+    }
+  }
 }
 // Dark par défaut sauf si l'utilisateur a explicitement choisi le mode clair
 const savedTheme = localStorage.getItem("tdc_theme");
@@ -268,7 +280,7 @@ function saveCountry(id, entry) { set(ref(db, "countries/" + id), entry); }
 function listenToData() {
   onValue(ref(db, "countries"), snapshot => {
     allData = snapshot.val() || {};
-    applyColors(); updateStats(); renderDrawer();
+    applyColors(); updateStats(); renderDrawer(); renderPulseRings();
   });
 }
 
@@ -320,15 +332,26 @@ async function loadMap() {
     col
   }));
 
-  // Graticule (lignes lat/lon) dans chaque copie
+  // Océan + graticule + groupe rings dans chaque copie
   const graticule = d3mod.geoGraticule().step([30, 30]);
+  const isDark = document.body.classList.contains("dark");
   copies.forEach(({ g: copyG }) => {
-    copyG.insert("path", ":first-child")
+    // 1 — Fond océan
+    copyG.append("path")
+      .datum({ type: "Sphere" })
+      .attr("d", path)
+      .attr("class", "ocean-sphere")
+      .attr("fill", isDark ? "#0d1e38" : "#c8dff5")
+      .attr("stroke", "none");
+    // 2 — Graticule
+    copyG.append("path")
       .datum(graticule())
       .attr("d", path)
       .attr("fill", "none")
       .attr("class", "graticule-line")
       .attr("stroke-width", 0.35);
+    // 3 — Groupe pulse rings (derrière les pays)
+    ringsCopies.push(copyG.append("g").attr("class", "rings-group"));
   });
 
   const features = topomod.feature(world, world.objects.countries).features;
@@ -364,13 +387,16 @@ async function loadMap() {
           d3mod.selectAll(`[data-id="${id}"]`)
             .attr("fill", hovers[s]  || hovers.todo)
             .attr("stroke", strokes[s] || strokes.todo)
-            .attr("stroke-width", 1.2);
+            .attr("stroke-width", 1.2)
+            .classed("hovered", true);
         })
         .on("mousemove", moveTooltip)
         .on("mouseleave", () => {
           hideTooltip();
           applyColorById(id);
-          d3mod.selectAll(`[data-id="${id}"]`).attr("stroke", "transparent").attr("stroke-width", 0);
+          d3mod.selectAll(`[data-id="${id}"]`)
+            .attr("stroke", "transparent").attr("stroke-width", 0)
+            .classed("hovered", false);
         })
         .on("click", () => openPanel(id, name))
         .on("contextmenu", function(event) { showCtxMenu(event, id, name); });
@@ -395,16 +421,43 @@ async function loadMap() {
           d3mod.selectAll(`[data-id="${id}"]`)
             .attr("fill", hovers[s]  || hovers.todo)
             .attr("stroke", strokes[s] || strokes.todo)
-            .attr("stroke-width", 1.2);
+            .attr("stroke-width", 1.2)
+            .classed("hovered", true);
         })
         .on("mousemove", moveTooltip)
         .on("mouseleave", () => {
           hideTooltip();
           applyColorById(id);
-          d3mod.selectAll(`[data-id="${id}"]`).attr("stroke", "transparent").attr("stroke-width", 0);
+          d3mod.selectAll(`[data-id="${id}"]`)
+            .attr("stroke", "transparent").attr("stroke-width", 0)
+            .classed("hovered", false);
         })
         .on("click", () => openPanel(id, name))
         .on("contextmenu", function(event) { showCtxMenu(event, id, name); });
+    });
+
+    // Labels pays (visibles au zoom ≥ 4)
+    const labelsG = copyG.append("g").attr("class", "labels-group")
+      .style("opacity", 0).style("pointer-events", "none");
+    labelsCopies.push(labelsG);
+    features.forEach(f => {
+      const id  = String(f.id).padStart(3, "0");
+      const lbl = NAME_MAP[id];
+      if (!lbl) return;
+      const [lx, ly] = projection(d3mod.geoCentroid(f));
+      if (!isFinite(lx) || !isFinite(ly)) return;
+      labelsG.append("text")
+        .attr("class", "country-label")
+        .attr("x", lx).attr("y", ly)
+        .attr("text-anchor", "middle")
+        .attr("dominant-baseline", "central")
+        .attr("font-size", 9)
+        .attr("fill",   isDark ? "rgba(255,255,255,0.8)"  : "rgba(20,20,20,0.75)")
+        .attr("paint-order", "stroke")
+        .attr("stroke", isDark ? "rgba(6,8,17,0.85)"      : "rgba(255,255,255,0.92)")
+        .attr("stroke-width", 2.5)
+        .attr("stroke-linejoin", "round")
+        .text(lbl);
     });
   });
 
@@ -428,6 +481,13 @@ async function loadMap() {
         copyG.attr("transform", `translate(${nx + col * sW}, ${ty}) scale(${k})`);
       });
       svg.selectAll(".microstate").attr("r", 3.5 / k).attr("stroke-width", 0.8 / k);
+      // Pulse rings : maintenir la taille visuelle quelle que soit le zoom
+      svg.selectAll(".pulse-ring").attr("r", 6 / k);
+      // Labels : apparaissent à partir de zoom 4
+      currentZoomK = k;
+      const showLabels = k >= 4;
+      labelsCopies.forEach(g => g.style("opacity", showLabels ? 1 : 0));
+      if (showLabels) svg.selectAll(".country-label").attr("font-size", 9 / k);
     });
 
   zoomBeh = zoom;
@@ -443,6 +503,7 @@ async function loadMap() {
 
   document.getElementById("map-loading").remove();
   applyColors();
+  renderPulseRings();
   initSearch();
   // Fade-in cinématique des pays
   requestAnimationFrame(() => setTimeout(() => {
@@ -470,6 +531,11 @@ function applyColorToEl(el, id) {
   const dark = document.body.classList.contains("dark");
   const fills = dark ? mapFillDark : mapFill;
   el.setAttribute("fill", fills[s] || fills.todo);
+  if (filterStagger) {
+    const delay = Math.random() * 180;
+    el.style.transitionDelay = `${delay}ms`;
+    setTimeout(() => { el.style.transitionDelay = ""; }, delay + 400);
+  }
   el.style.opacity = filtered ? "0" : "1";
   el.style.pointerEvents = filtered ? "none" : "";
 }
@@ -491,9 +557,9 @@ function updateStats() {
   };
   const annotated = counts.wip + counts.script + counts.done;
 
-  document.getElementById("cnt-wip").textContent    = counts.wip;
-  document.getElementById("cnt-script").textContent = counts.script;
-  document.getElementById("cnt-done").textContent   = counts.done;
+  animateCounter(document.getElementById("cnt-wip"),    counts.wip);
+  animateCounter(document.getElementById("cnt-script"), counts.script);
+  animateCounter(document.getElementById("cnt-done"),   counts.done);
 
   const lbl = document.getElementById("progress-label");
   if (lbl) lbl.textContent = `${annotated} / ${TOTAL}`;
@@ -565,7 +631,9 @@ document.querySelectorAll(".fbtn").forEach(btn => {
       activeFilters.add(f);
       btn.classList.add("active");
     }
+    filterStagger = true;
     applyColors();
+    filterStagger = false;
   });
 });
 
@@ -1002,6 +1070,54 @@ function renderDrawer() {
 }
 
 function initApp() { listenToData(); listenToOrder(); loadMap(); }
+
+// ── Compteur animé ────────────────────────────────────────────────────────────
+function animateCounter(el, to) {
+  const from = parseInt(el.textContent) || 0;
+  if (from === to) { el.textContent = to; return; }
+  const duration = 550;
+  const start = performance.now();
+  const step = t => {
+    const p = Math.min((t - start) / duration, 1);
+    const ease = 1 - Math.pow(1 - p, 3);
+    el.textContent = Math.round(from + (to - from) * ease);
+    if (p < 1) requestAnimationFrame(step);
+    else el.textContent = to;
+  };
+  requestAnimationFrame(step);
+}
+
+// ── Pulse rings (pays terminés) ───────────────────────────────────────────────
+function renderPulseRings() {
+  if (!ringsCopies.length || !geoFeatures.length || !projFn || !d3lib) return;
+  const dark  = document.body.classList.contains("dark");
+  const color = dark ? "#4ADE80" : "#38a060";
+  const doneIds = Object.keys(allData).filter(id => allData[id]?.status === "done");
+
+  ringsCopies.forEach(ringsG => {
+    ringsG.selectAll("*").remove();
+    doneIds.forEach((id, i) => {
+      let cx, cy;
+      const feature = geoFeatures.find(f => String(f.id).padStart(3, "0") === id);
+      if (feature) {
+        [cx, cy] = projFn(d3lib.geoCentroid(feature));
+      } else {
+        const ms = MICROSTATES.find(m => m.id === id);
+        if (!ms) return;
+        [cx, cy] = projFn([ms.lon, ms.lat]);
+      }
+      if (!isFinite(cx) || !isFinite(cy)) return;
+      ringsG.append("circle")
+        .attr("class", "pulse-ring")
+        .attr("cx", cx).attr("cy", cy)
+        .attr("r",  6 / (currentZoomK || 1))
+        .attr("fill", "none")
+        .attr("stroke", color)
+        .attr("stroke-width", 0.6)
+        .style("animation-delay", `${(i % 7) * 0.45}s`);
+    });
+  });
+}
 
 // ── Sort modal (ordre des épisodes) ───────────────────────────────────────────
 let episodeOrder = [];

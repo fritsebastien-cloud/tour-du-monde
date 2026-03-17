@@ -138,7 +138,7 @@ body.dark .progress-label {
   border-color: rgba(255,255,255,0.07);
   color: rgba(255,255,255,0.3);
 }
-#progress-bar-wrap { height: 1px; background: rgba(0,0,0,0.06); flex-shrink: 0; }
+#progress-bar-wrap { height: 2px; background: rgba(0,0,0,0.06); flex-shrink: 0; }
 body.dark #progress-bar-wrap { background: rgba(255,255,255,0.04); }
 #progress-bar { display: flex; height: 100%; }
 .pb-todo   { background: #c8c8c2; transition: width 0.5s ease; }
@@ -314,12 +314,40 @@ body.dark .map-grain { opacity: 0.045; }
 }
 .country.selected { stroke-width: 1.4 !important; }
 
+/* Océan */
+.ocean-sphere { transition: fill 0.4s; }
+
 /* Graticule */
 .graticule-line {
-  stroke: rgba(0,0,0,0.06);
+  stroke: rgba(0,0,0,0.09);
   transition: stroke 0.4s;
 }
-body.dark .graticule-line { stroke: rgba(255,255,255,0.04); }
+body.dark .graticule-line { stroke: rgba(255,255,255,0.06); }
+
+/* Élévation au survol */
+.country.hovered { filter: drop-shadow(0 4px 16px rgba(0,0,0,0.42)); }
+body:not(.dark) .country.hovered { filter: drop-shadow(0 3px 12px rgba(0,60,120,0.22)); }
+
+/* Pulse rings (pays "done") */
+@keyframes pulse-ring {
+  0%   { transform: scale(1);   opacity: 0.65; }
+  100% { transform: scale(4.5); opacity: 0;    }
+}
+.pulse-ring {
+  transform-box: fill-box;
+  transform-origin: center;
+  animation: pulse-ring 3s ease-out infinite;
+  pointer-events: none;
+}
+
+/* Labels pays (zoom élevé) */
+.country-label {
+  font-family: "Inter", sans-serif;
+  font-weight: 500;
+  letter-spacing: 0.01em;
+  pointer-events: none;
+  user-select: none;
+}
 
 /* Fade-in au chargement */
 #countries-group {
