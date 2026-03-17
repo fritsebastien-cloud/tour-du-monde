@@ -622,16 +622,8 @@ body.dark .d-cat { color: rgba(255,255,255,0.18); }
 }
 body.dark #country-hero { border-bottom-color: rgba(255,255,255,0.06); }
 
-/* Fond flou artiste */
-#hero-bg {
-  position: absolute; inset: -24px; z-index: 0;
-  background-size: cover; background-position: center top;
-  filter: blur(20px);
-  opacity: 0;
-  transition: opacity 0.6s ease;
-}
-#hero-bg.visible { opacity: 0.6; }
-body:not(.dark) #hero-bg.visible { opacity: 0.45; }
+/* Fond flou artiste (désactivé) */
+#hero-bg { display: none; }
 
 /* Zone de la forme — centrée, couvre tout le hero */
 #country-shape-area {
@@ -641,6 +633,32 @@ body:not(.dark) #hero-bg.visible { opacity: 0.45; }
   align-items: center;
   justify-content: center;
   pointer-events: none;
+  transition: right 0.35s ease;
+}
+/* Décale la forme à gauche quand une photo est présente */
+#country-hero.has-photo #country-shape-area { right: 148px; }
+
+/* Photo artiste nette à droite */
+#hero-artist-photo {
+  position: absolute;
+  right: 1.4rem;
+  bottom: 1.1rem;
+  z-index: 3;
+  opacity: 0;
+  transform: translateY(6px);
+  transition: opacity 0.35s ease, transform 0.35s ease;
+}
+#country-hero.has-photo #hero-artist-photo {
+  opacity: 1;
+  transform: translateY(0);
+}
+#hero-artist-img {
+  width: 100px; height: 100px;
+  border-radius: 10px;
+  object-fit: cover;
+  border: 1.5px solid rgba(255,255,255,0.18);
+  box-shadow: 0 4px 20px rgba(0,0,0,0.45), 0 1px 0 rgba(255,255,255,0.06) inset;
+  display: block;
 }
 #country-shape-area svg {
   display: block;
@@ -656,17 +674,10 @@ body:not(.dark) #hero-bg.visible { opacity: 0.45; }
   position: absolute;
   inset: 0; z-index: 2;
   pointer-events: none;
-  background: linear-gradient(to bottom, transparent 20%, rgba(0,0,0,0.62) 100%);
-  transition: background 0.4s;
+  background: linear-gradient(to bottom, transparent 30%, rgba(0,0,0,0.55) 100%);
 }
 body:not(.dark) #country-hero::after {
-  background: linear-gradient(to bottom, transparent 20%, rgba(255,255,255,0.8) 100%);
-}
-#country-hero.has-photo::after {
-  background: linear-gradient(to bottom, rgba(0,0,0,0.15) 0%, rgba(0,0,0,0.72) 100%);
-}
-body:not(.dark) #country-hero.has-photo::after {
-  background: linear-gradient(to bottom, rgba(0,0,0,0.05) 0%, rgba(0,0,0,0.55) 100%);
+  background: linear-gradient(to bottom, transparent 30%, rgba(255,255,255,0.75) 100%);
 }
 
 /* Texte overlay */
@@ -684,7 +695,6 @@ body:not(.dark) #country-hero.has-photo::after {
   text-shadow: 0 1px 8px rgba(0,0,0,0.4);
 }
 body:not(.dark) #country-hero .panel-name { color: #1a1a1a; text-shadow: none; }
-body:not(.dark) #country-hero.has-photo .panel-name { color: #fff; text-shadow: 0 1px 8px rgba(0,0,0,0.5); }
 
 #country-hero .panel-status-lbl {
   font-size: 11px;
@@ -693,7 +703,6 @@ body:not(.dark) #country-hero.has-photo .panel-name { color: #fff; text-shadow: 
   letter-spacing: 0.04em;
 }
 body:not(.dark) #country-hero .panel-status-lbl { color: #999; }
-body:not(.dark) #country-hero.has-photo .panel-status-lbl { color: rgba(255,255,255,0.7); }
 
 /* Bouton close repositionné en haut à droite du hero */
 #country-hero .btn-close {

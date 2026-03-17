@@ -866,18 +866,15 @@ document.getElementById("ctx-open").addEventListener("click", e => {
 // ── Artist photo picker ───────────────────────────────────────────────────────
 function renderArtistPhoto() {
   const sel    = document.getElementById("artist-photo-selected");
-  const heroBg = document.getElementById("hero-bg");
   const heroEl = document.getElementById("country-hero");
+  const img    = document.getElementById("hero-artist-img");
   if (currentArtistPhoto) {
+    img.src = currentArtistPhoto;
     sel.classList.remove("hidden");
-    heroBg.style.backgroundImage = `url(${currentArtistPhoto})`;
-    heroBg.classList.add("visible");
     heroEl.classList.add("has-photo");
   } else {
     sel.classList.add("hidden");
-    heroBg.classList.remove("visible");
     heroEl.classList.remove("has-photo");
-    setTimeout(() => { if (!currentArtistPhoto) heroBg.style.backgroundImage = ""; }, 600);
   }
 }
 
