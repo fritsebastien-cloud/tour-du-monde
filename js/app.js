@@ -465,11 +465,13 @@ function zoomToCountry(id) {
 // ── Couleurs ──────────────────────────────────────────────────────────────────
 function applyColorToEl(el, id) {
   const s = allData[id]?.status || null;
-  const filtered = s && !activeFilters.has(s);
+  const effectiveStatus = s || "todo";
+  const filtered = !activeFilters.has(effectiveStatus);
   const dark = document.body.classList.contains("dark");
   const fills = dark ? mapFillDark : mapFill;
-  el.setAttribute("fill", filtered ? (dark ? "#111827" : "#e8e8e4") : (fills[s] || fills.todo));
-  el.style.opacity = filtered ? "0.3" : "1";
+  el.setAttribute("fill", fills[s] || fills.todo);
+  el.style.opacity = filtered ? "0" : "1";
+  el.style.pointerEvents = filtered ? "none" : "";
 }
 function applyColorById(id) {
   document.querySelectorAll(`[data-id="${id}"]`).forEach(el => applyColorToEl(el, id));
