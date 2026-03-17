@@ -686,20 +686,15 @@ const floatFill = {
   done:   { dark: "#2a7a50", light: "#256e48" },
 };
 
-// Extrait le polygone dominant d'un MultiPolygon (plus grande surface projetée)
-// → évite que les DOM-TOM/Alaska/Hawaii fassent exploser la bounding box
-function getDominantPolygon(feature, pathFn) {
+// Polygone dominant par surface géographique réelle (d3.geoArea, pas besoin de projection)
+// → France sans DOM-TOM, USA sans Alaska/Hawaii, Russie sans îles, etc.
+function getDominantPolygon(feature) {
   if (!feature.geometry || feature.geometry.type !== "MultiPolygon") return feature;
   let best = null, bestArea = 0;
   for (const poly of feature.geometry.coordinates) {
     const f = { type: "Feature", geometry: { type: "Polygon", coordinates: poly }, properties: {} };
-    try {
-      const [[x0, y0], [x1, y1]] = pathFn.bounds(f);
-      if (isFinite(x0) && isFinite(y0)) {
-        const a = (x1 - x0) * (y1 - y0);
-        if (a > bestArea) { bestArea = a; best = poly; }
-      }
-    } catch(e) {}
+    const area = d3lib.geoArea(f);
+    if (area > bestArea) { bestArea = area; best = poly; }
   }
   return best
     ? { ...feature, geometry: { type: "Polygon", coordinates: best } }
@@ -714,12 +709,27 @@ function renderFloatingCountry(id) {
   const RENDER = 1200, PAD = 56;
   let dStr, viewBox;
   try {
-    const proj   = d3lib.geoNaturalEarth1().fitSize([RENDER, RENDER], feature);
+    // 1. Polygone dominant (surface géo réelle → pas besoin de projection)
+    const main = getDominantPolygon(feature);
+
+    // 2. Centroïde géographique du polygone principal
+    const [cLon, cLat] = d3lib.geoCentroid(main);
+
+    // 3. Projection adaptée :
+    //    - Pôles (|lat| > 75°) → azimutale centrée sur le pôle (Antarctique, Groenland…)
+    //    - Autres → NaturalEarth1 pivotée sur la longitude → élimine le problème antiméridien (Russie…)
+    let proj;
+    if (Math.abs(cLat) > 75) {
+      proj = d3lib.geoAzimuthalEqualArea()
+        .rotate([0, cLat > 0 ? -90 : 90])
+        .fitSize([RENDER, RENDER], main);
+    } else {
+      proj = d3lib.geoNaturalEarth1()
+        .rotate([-cLon, 0])
+        .fitSize([RENDER, RENDER], main);
+    }
+
     const pathFn = d3lib.geoPath(proj);
-
-    // Utiliser uniquement le polygone principal (ignore DOM-TOM, îles lointaines…)
-    const main = getDominantPolygon(feature, pathFn);
-
     dStr = pathFn(main);
     const [[x0, y0], [x1, y1]] = pathFn.bounds(main);
     if (!isFinite(x0) || x1 <= x0 || y1 <= y0) throw new Error("invalid bounds");
