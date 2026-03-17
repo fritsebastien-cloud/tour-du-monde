@@ -21,6 +21,8 @@ let selectedId = null;
 let selectedName = null;
 let currentStatus = "todo";
 let currentLinks = [];
+let currentArtistPhoto = "";
+let artistDebounceTimer = null;
 
 // Références carte (initialisées dans loadMap)
 let d3lib = null;
@@ -611,8 +613,11 @@ function openPanel(id, name) {
   document.getElementById("panel-artist").value           = entry.artist   || "";
   document.getElementById("panel-category").value         = entry.category || "";
   document.getElementById("panel-note").value             = entry.note     || "";
-  currentStatus = entry.status && entry.status !== "todo" ? entry.status : null;
-  currentLinks  = entry.links  || [];
+  currentStatus      = entry.status && entry.status !== "todo" ? entry.status : null;
+  currentLinks       = entry.links  || [];
+  currentArtistPhoto = entry.artistPhoto || "";
+  document.getElementById("artist-suggestions").classList.add("hidden");
+  renderArtistPhoto();
 
   document.querySelectorAll(".sbtn").forEach(b =>
     b.classList.toggle("active", b.dataset.s === currentStatus));
@@ -657,11 +662,12 @@ function autoSave() {
     return;
   }
   const entry = {
-    status:   currentStatus || null,
+    status:      currentStatus || null,
     artist, category, note,
-    links:    currentLinks,
-    editedAt: Date.now(),
-    name:     selectedName
+    links:       currentLinks,
+    artistPhoto: currentArtistPhoto || null,
+    editedAt:    Date.now(),
+    name:        selectedName
   };
   allData[selectedId] = { ...(allData[selectedId] || {}), ...entry };
   saveCountry(selectedId, allData[selectedId]);
@@ -855,6 +861,65 @@ document.getElementById("ctx-open").addEventListener("click", e => {
   const name = ctxMenu.dataset.name;
   ctxMenu.classList.add("hidden");
   openPanel(id, name);
+});
+
+// ── Artist photo picker ───────────────────────────────────────────────────────
+function renderArtistPhoto() {
+  const sel = document.getElementById("artist-photo-selected");
+  const img = document.getElementById("artist-photo-img");
+  if (currentArtistPhoto) {
+    img.src = currentArtistPhoto;
+    sel.classList.remove("hidden");
+  } else {
+    sel.classList.add("hidden");
+  }
+}
+
+async function searchArtistImages(query) {
+  const sug   = document.getElementById("artist-suggestions");
+  const inner = document.getElementById("artist-sug-inner");
+  inner.innerHTML = '<span class="sug-msg">Recherche…</span>';
+  sug.classList.remove("hidden");
+  try {
+    const searchUrl = `https://en.wikipedia.org/w/api.php?action=query&list=search&srsearch=${encodeURIComponent(query)}&srlimit=6&format=json&origin=*`;
+    const searchData = await fetch(searchUrl).then(r => r.json());
+    const titles = (searchData.query?.search || []).map(r => r.title).slice(0, 6);
+    if (!titles.length) { inner.innerHTML = '<span class="sug-msg">Aucun résultat</span>'; return; }
+
+    const imgUrl = `https://en.wikipedia.org/w/api.php?action=query&titles=${encodeURIComponent(titles.join("|"))}&prop=pageimages&pithumbsize=280&format=json&origin=*`;
+    const imgData = await fetch(imgUrl).then(r => r.json());
+    const photos = Object.values(imgData.query?.pages || {})
+      .filter(p => p.thumbnail?.source)
+      .map(p => ({ src: p.thumbnail.source, title: p.title }));
+
+    if (!photos.length) { inner.innerHTML = '<span class="sug-msg">Aucune image trouvée</span>'; return; }
+
+    inner.innerHTML = photos.map(p =>
+      `<img src="${p.src}" alt="${p.title.replace(/"/g,'&quot;')}" title="${p.title.replace(/"/g,'&quot;')}" />`
+    ).join("");
+
+    inner.querySelectorAll("img").forEach((img, i) => {
+      img.addEventListener("click", () => {
+        currentArtistPhoto = photos[i].src;
+        renderArtistPhoto();
+        sug.classList.add("hidden");
+      });
+    });
+  } catch(e) {
+    inner.innerHTML = '<span class="sug-msg">Erreur de chargement</span>';
+  }
+}
+
+document.getElementById("panel-artist").addEventListener("input", e => {
+  clearTimeout(artistDebounceTimer);
+  const q = e.target.value.trim();
+  if (!q) { document.getElementById("artist-suggestions").classList.add("hidden"); return; }
+  artistDebounceTimer = setTimeout(() => searchArtistImages(q), 650);
+});
+
+document.getElementById("artist-photo-clear").addEventListener("click", () => {
+  currentArtistPhoto = "";
+  renderArtistPhoto();
 });
 
 // ── Links ─────────────────────────────────────────────────────────────────────
