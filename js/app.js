@@ -672,26 +672,56 @@ function autoSave() {
 
 // ── Pays flottant 3D ──────────────────────────────────────────────────────────
 const glowRGB = {
-  todo:   { dark: "70,110,220",  light: "140,140,130" },
-  wip:    { dark: "240,160,40",  light: "210,148,20"  },
-  script: { dark: "230,70,160",  light: "200,60,140"  },
-  done:   { dark: "60,200,120",  light: "50,170,100"  },
+  todo:   { dark: "70,110,220",  light: "61,74,107"   },
+  wip:    { dark: "240,160,40",  light: "196,122,16"  },
+  script: { dark: "230,70,160",  light: "176,64,128"  },
+  done:   { dark: "60,200,120",  light: "42,122,80"   },
 };
+
+// Couleurs de fill dédiées au float — toujours visibles quel que soit le thème
+const floatFill = {
+  todo:   { dark: "#17202e", light: "#3d4a6b" },
+  wip:    { dark: "#c47a10", light: "#b06e0e" },
+  script: { dark: "#b04080", light: "#a03878" },
+  done:   { dark: "#2a7a50", light: "#256e48" },
+};
+
+// Extrait le polygone dominant d'un MultiPolygon (plus grande surface projetée)
+// → évite que les DOM-TOM/Alaska/Hawaii fassent exploser la bounding box
+function getDominantPolygon(feature, pathFn) {
+  if (!feature.geometry || feature.geometry.type !== "MultiPolygon") return feature;
+  let best = null, bestArea = 0;
+  for (const poly of feature.geometry.coordinates) {
+    const f = { type: "Feature", geometry: { type: "Polygon", coordinates: poly }, properties: {} };
+    try {
+      const [[x0, y0], [x1, y1]] = pathFn.bounds(f);
+      if (isFinite(x0) && isFinite(y0)) {
+        const a = (x1 - x0) * (y1 - y0);
+        if (a > bestArea) { bestArea = a; best = poly; }
+      }
+    } catch(e) {}
+  }
+  return best
+    ? { ...feature, geometry: { type: "Polygon", coordinates: best } }
+    : feature;
+}
 
 function renderFloatingCountry(id) {
   const floatEl = document.getElementById("country-float");
   const feature = geoFeatures.find(f => String(f.id).padStart(3, "0") === id);
   if (!feature || !d3lib) { floatEl.classList.remove("visible"); return; }
 
-  // Rendu à haute résolution puis on lit les bounds réels en pixels
-  // → garantit la même taille visuelle pour tous les pays (Russie, France, Vatican…)
-  const RENDER = 1200, PAD = 48;
+  const RENDER = 1200, PAD = 56;
   let dStr, viewBox;
   try {
     const proj   = d3lib.geoNaturalEarth1().fitSize([RENDER, RENDER], feature);
     const pathFn = d3lib.geoPath(proj);
-    dStr = pathFn(feature);
-    const [[x0, y0], [x1, y1]] = pathFn.bounds(feature);
+
+    // Utiliser uniquement le polygone principal (ignore DOM-TOM, îles lointaines…)
+    const main = getDominantPolygon(feature, pathFn);
+
+    dStr = pathFn(main);
+    const [[x0, y0], [x1, y1]] = pathFn.bounds(main);
     if (!isFinite(x0) || x1 <= x0 || y1 <= y0) throw new Error("invalid bounds");
     viewBox = `${x0 - PAD} ${y0 - PAD} ${x1 - x0 + PAD * 2} ${y1 - y0 + PAD * 2}`;
   } catch(e) { floatEl.classList.remove("visible"); return; }
@@ -700,7 +730,7 @@ function renderFloatingCountry(id) {
   const SVG = 260;
   const s    = allData[id]?.status || null;
   const dark = document.body.classList.contains("dark");
-  const fill = (dark ? mapFillDark : mapFill)[s] || (dark ? mapFillDark : mapFill).todo;
+  const fill = (floatFill[s || "todo"] || floatFill.todo)[dark ? "dark" : "light"];
   const rgb  = (glowRGB[s || "todo"] || glowRGB.todo)[dark ? "dark" : "light"];
 
   floatEl.innerHTML = `
@@ -714,12 +744,12 @@ function renderFloatingCountry(id) {
           <feMerge><feMergeNode in="blur"/><feMergeNode in="SourceGraphic"/></feMerge>
         </filter>
       </defs>
-      <path d="${dStr}" fill="${fill}" filter="url(#float-shadow)" opacity="${dark ? 1 : 0.75}"/>
-      <path d="${dStr}" fill="${fill}" filter="url(#float-glow)"   opacity="${dark ? 0.9 : 0.8}"/>
+      <path d="${dStr}" fill="${fill}" filter="url(#float-shadow)"/>
+      <path d="${dStr}" fill="${fill}" filter="url(#float-glow)" opacity="0.9"/>
     </svg>`;
 
   floatEl.classList.remove("visible");
-  void floatEl.offsetWidth; // force reflow pour ré-animer
+  void floatEl.offsetWidth;
   floatEl.classList.add("visible");
 }
 
