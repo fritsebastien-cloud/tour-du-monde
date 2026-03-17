@@ -608,37 +608,42 @@ body.dark .d-artist { color: rgba(255,255,255,0.28); }
 .d-cat { font-size: 11px; color: #ccc; margin-top: 1px; }
 body.dark .d-cat { color: rgba(255,255,255,0.18); }
 
-/* ── PAYS FLOTTANT 3D ──────────────────────────────────────────────────────── */
-#country-float {
-  position: fixed;
-  /* À gauche du modal centré (modal = 560px, soit ±280px du centre) */
-  right: calc(50% + 296px);
-  top: 50%;
-  transform: translateY(-50%) translateX(20px);
-  z-index: 49;
+/* ── PAYS HERO (dans le modal) ─────────────────────────────────────────────── */
+#country-hero {
+  height: 150px;
+  flex-shrink: 0;
+  position: relative;
+  overflow: hidden;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  border-bottom: 1px solid rgba(0,0,0,0.06);
+  transition: background 0.4s ease;
+}
+body.dark #country-hero { border-bottom-color: rgba(255,255,255,0.05); }
+
+/* Halo de lumière derrière la forme */
+#country-hero::before {
+  content: '';
+  position: absolute;
+  inset: 0;
+  background: inherit;
   pointer-events: none;
-  opacity: 0;
-  transition: opacity 0.45s cubic-bezier(0.2, 0, 0, 1),
-              transform 0.45s cubic-bezier(0.2, 0, 0, 1);
 }
-#country-float.visible {
-  opacity: 1;
-  transform: translateY(-50%) translateX(0);
-}
-#country-float svg {
+
+#country-hero svg {
   display: block;
+  position: relative;
+  z-index: 1;
+  opacity: 0;
+  transition: opacity 0.5s ease 0.08s;
   animation: countryFloat3D 5s ease-in-out infinite;
 }
-body.dark #country-float svg {
-  filter: drop-shadow(0 4px 28px rgba(0,0,0,0.5));
-}
+#country-hero.loaded svg { opacity: 1; }
+
 @keyframes countryFloat3D {
-  0%,100% { transform: perspective(700px) rotateY(-14deg) rotateX(7deg)  translateY(0);    }
-  50%     { transform: perspective(700px) rotateY(-7deg)  rotateX(3deg)  translateY(-11px); }
-}
-/* Masquer le float si viewport trop petit pour l'afficher sans débordement */
-@media (max-width: 960px) {
-  #country-float { display: none; }
+  0%,100% { transform: perspective(600px) rotateY(-10deg) rotateX(6deg) translateY(0);     }
+  50%     { transform: perspective(600px) rotateY(-4deg)  rotateX(2deg) translateY(-8px);  }
 }
 
 /* ── CONTEXT MENU ──────────────────────────────────────────────────────────── */

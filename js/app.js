@@ -702,9 +702,9 @@ function getDominantPolygon(feature) {
 }
 
 function renderFloatingCountry(id) {
-  const floatEl = document.getElementById("country-float");
+  const floatEl = document.getElementById("country-hero");
   const feature = geoFeatures.find(f => String(f.id).padStart(3, "0") === id);
-  if (!feature || !d3lib) { floatEl.classList.remove("visible"); return; }
+  if (!feature || !d3lib) { floatEl.classList.remove("loaded"); return; }
 
   const RENDER = 1200, PAD = 56;
   let dStr, viewBox;
@@ -734,38 +734,45 @@ function renderFloatingCountry(id) {
     const [[x0, y0], [x1, y1]] = pathFn.bounds(main);
     if (!isFinite(x0) || x1 <= x0 || y1 <= y0) throw new Error("invalid bounds");
     viewBox = `${x0 - PAD} ${y0 - PAD} ${x1 - x0 + PAD * 2} ${y1 - y0 + PAD * 2}`;
-  } catch(e) { floatEl.classList.remove("visible"); return; }
-  if (!dStr || dStr.length < 6) { floatEl.classList.remove("visible"); return; }
+  } catch(e) { floatEl.classList.remove("loaded"); return; }
+  if (!dStr || dStr.length < 6) { floatEl.classList.remove("loaded"); return; }
 
-  const SVG = 260;
+  const SVG = 140;
   const s    = allData[id]?.status || null;
   const dark = document.body.classList.contains("dark");
   const fill = (floatFill[s || "todo"] || floatFill.todo)[dark ? "dark" : "light"];
   const rgb  = (glowRGB[s || "todo"] || glowRGB.todo)[dark ? "dark" : "light"];
 
+  // Fond teinté de la zone hero selon le statut
+  floatEl.style.background = dark
+    ? `radial-gradient(ellipse at 55% 55%, rgba(${rgb},0.18) 0%, transparent 70%)`
+    : `radial-gradient(ellipse at 55% 55%, rgba(${rgb},0.10) 0%, transparent 65%)`;
+
   floatEl.innerHTML = `
     <svg viewBox="${viewBox}" width="${SVG}" height="${SVG}" overflow="visible" xmlns="http://www.w3.org/2000/svg">
       <defs>
-        <filter id="float-shadow" x="-40%" y="-30%" width="180%" height="220%">
-          <feDropShadow dx="0" dy="22" stdDeviation="18" flood-color="rgb(${rgb})" flood-opacity="0.52"/>
+        <filter id="hero-shadow" x="-40%" y="-30%" width="180%" height="200%">
+          <feDropShadow dx="0" dy="14" stdDeviation="12" flood-color="rgb(${rgb})" flood-opacity="0.55"/>
         </filter>
-        <filter id="float-glow" x="-15%" y="-15%" width="130%" height="130%">
-          <feGaussianBlur stdDeviation="3" result="blur"/>
+        <filter id="hero-glow" x="-15%" y="-15%" width="130%" height="130%">
+          <feGaussianBlur stdDeviation="2.5" result="blur"/>
           <feMerge><feMergeNode in="blur"/><feMergeNode in="SourceGraphic"/></feMerge>
         </filter>
       </defs>
-      <path d="${dStr}" fill="${fill}" filter="url(#float-shadow)"/>
-      <path d="${dStr}" fill="${fill}" filter="url(#float-glow)" opacity="0.9"/>
+      <path d="${dStr}" fill="${fill}" filter="url(#hero-shadow)"/>
+      <path d="${dStr}" fill="${fill}" filter="url(#hero-glow)" opacity="0.92"/>
     </svg>`;
 
-  floatEl.classList.remove("visible");
+  floatEl.classList.remove("loaded");
   void floatEl.offsetWidth;
-  floatEl.classList.add("visible");
+  floatEl.classList.add("loaded");
 }
 
 function closePanel() {
   autoSave();
-  document.getElementById("country-float").classList.remove("visible");
+  const hero = document.getElementById("country-hero");
+  hero.classList.remove("loaded");
+  hero.style.background = "";
   document.querySelectorAll(".country.selected").forEach(el => {
     el.classList.remove("selected");
     el.setAttribute("stroke", "transparent");
