@@ -622,14 +622,6 @@ body.dark .d-cat { color: rgba(255,255,255,0.18); }
 }
 body.dark #country-hero { border-bottom-color: rgba(255,255,255,0.05); }
 
-/* Halo de lumière derrière la forme */
-#country-hero::before {
-  content: '';
-  position: absolute;
-  inset: 0;
-  background: inherit;
-  pointer-events: none;
-}
 
 #country-hero svg {
   display: block;
