@@ -314,9 +314,6 @@ body.dark .map-grain { opacity: 0.045; }
 }
 .country.selected { stroke-width: 1.4 !important; }
 
-/* Océan */
-.ocean-sphere { transition: fill 0.4s; }
-
 /* Graticule */
 .graticule-line {
   stroke: rgba(0,0,0,0.09);

@@ -234,7 +234,6 @@ function applyTheme(dark) {
   if (document.getElementById("countries-group").children.length > 0) {
     applyColors();
     if (d3lib) {
-      d3lib.selectAll(".ocean-sphere").attr("fill", dark ? "#0d1e38" : "#c8dff5");
       d3lib.selectAll(".pulse-ring").attr("stroke", dark ? "#4ADE80" : "#38a060");
       d3lib.selectAll(".country-label")
         .attr("fill",   dark ? "rgba(255,255,255,0.8)"  : "rgba(20,20,20,0.75)")
@@ -336,14 +335,7 @@ async function loadMap() {
   const graticule = d3mod.geoGraticule().step([30, 30]);
   const isDark = document.body.classList.contains("dark");
   copies.forEach(({ g: copyG }) => {
-    // 1 — Fond océan
-    copyG.append("path")
-      .datum({ type: "Sphere" })
-      .attr("d", path)
-      .attr("class", "ocean-sphere")
-      .attr("fill", isDark ? "#0d1e38" : "#c8dff5")
-      .attr("stroke", "none");
-    // 2 — Graticule
+    // Graticule
     copyG.append("path")
       .datum(graticule())
       .attr("d", path)
