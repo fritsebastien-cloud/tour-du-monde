@@ -800,8 +800,7 @@ document.getElementById("panel-save").addEventListener("click", () => {
 document.addEventListener("keydown", e => {
   if (e.key === "Escape") {
     if (!panel.classList.contains("hidden")) { closePanel(); return; }
-    const drawer = document.getElementById("list-drawer");
-    if (!drawer.classList.contains("hidden")) drawer.classList.add("hidden");
+    if (!drawer.classList.contains("hidden")) { closeDrawer(); return; }
   }
   if (e.key === "Enter" && !panel.classList.contains("hidden") && e.target.tagName !== "TEXTAREA") {
     e.preventDefault();
@@ -943,12 +942,17 @@ document.getElementById("add-link-btn").addEventListener("click", () => {
 });
 
 // ── Drawer groupé par continent ───────────────────────────────────────────────
-const drawer = document.getElementById("list-drawer");
+const drawer        = document.getElementById("list-drawer");
+const drawerOverlay = document.getElementById("drawer-overlay");
+
+function openDrawer()  { renderDrawer(); drawer.classList.remove("hidden"); drawerOverlay.classList.remove("hidden"); }
+function closeDrawer() { drawer.classList.add("hidden"); drawerOverlay.classList.add("hidden"); }
+
 document.getElementById("list-toggle-btn").addEventListener("click", () => {
-  drawer.classList.toggle("hidden"); renderDrawer();
+  drawer.classList.contains("hidden") ? openDrawer() : closeDrawer();
 });
-document.getElementById("drawer-close").addEventListener("click", () =>
-  drawer.classList.add("hidden"));
+document.getElementById("drawer-close").addEventListener("click", closeDrawer);
+drawerOverlay.addEventListener("click", closeDrawer);
 
 const CONTINENT_ORDER = ["Afrique", "Amér. Nord", "Amér. Sud", "Asie", "Europe", "Océanie", "Autres"];
 const STATUS_ORDER = { done: 0, script: 1, wip: 2, todo: 3 };
@@ -989,7 +993,7 @@ function renderDrawer() {
   body.innerHTML = html;
   body.querySelectorAll(".ditem").forEach(el =>
     el.addEventListener("click", () => {
-      drawer.classList.add("hidden");
+      closeDrawer();
       openPanel(el.dataset.id, el.dataset.name);
     }));
 }
