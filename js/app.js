@@ -564,6 +564,17 @@ function updateStats() {
       ? `<span class="pb-${s}" style="width:${n / TOTAL * 100}%"></span>` : ""
     ).join("");
   }
+
+  // Progress ring
+  const pct = TOTAL > 0 ? annotated / TOTAL : 0;
+  const circumference = 2 * Math.PI * 11; // r=11
+  const offset = circumference * (1 - pct);
+  document.querySelectorAll(".progress-ring-fg").forEach(c => {
+    c.setAttribute("stroke-dashoffset", offset);
+  });
+  document.querySelectorAll(".progress-pct").forEach(el => {
+    animateCounter(el, Math.round(pct * 100), "%");
+  });
 }
 
 // ── Recherche ─────────────────────────────────────────────────────────────────
@@ -1064,17 +1075,18 @@ function renderDrawer() {
 function initApp() { listenToData(); listenToOrder(); loadMap(); }
 
 // ── Compteur animé ────────────────────────────────────────────────────────────
-function animateCounter(el, to) {
+function animateCounter(el, to, suffix) {
+  suffix = suffix || "";
   const from = parseInt(el.textContent) || 0;
-  if (from === to) { el.textContent = to; return; }
+  if (from === to) { el.textContent = to + suffix; return; }
   const duration = 550;
   const start = performance.now();
   const step = t => {
     const p = Math.min((t - start) / duration, 1);
     const ease = 1 - Math.pow(1 - p, 3);
-    el.textContent = Math.round(from + (to - from) * ease);
+    el.textContent = Math.round(from + (to - from) * ease) + suffix;
     if (p < 1) requestAnimationFrame(step);
-    else el.textContent = to;
+    else el.textContent = to + suffix;
   };
   requestAnimationFrame(step);
 }
@@ -1210,6 +1222,166 @@ document.getElementById("sort-save").addEventListener("click", () => {
   btn.textContent = "Enregistré ✓"; btn.classList.add("saved");
   setTimeout(() => { btn.textContent = "Enregistrer l'ordre"; btn.classList.remove("saved"); }, 2000);
 });
+
+// ── Mode présentation ────────────────────────────────────────────────────────
+(function initPresentation() {
+  const overlay     = document.getElementById("present-overlay");
+  const closeBtn    = document.getElementById("present-close");
+  const prevBtn     = document.getElementById("present-prev");
+  const nextBtn     = document.getElementById("present-next");
+  const counterEl   = document.getElementById("present-counter");
+  const dotsEl      = document.getElementById("present-dots");
+  const progressEl  = document.getElementById("present-progress-fill");
+  const shapeEl     = document.getElementById("present-shape");
+  const nameEl      = document.getElementById("present-name");
+  const statusDotEl = document.getElementById("present-status-dot");
+  const statusTxtEl = document.getElementById("present-status-text");
+  const artistEl    = document.getElementById("present-artist");
+  const categoryEl  = document.getElementById("present-category");
+  const noteEl      = document.getElementById("present-note");
+  if (!overlay) return;
+
+  let slides = [];
+  let idx = 0;
+  let autoTimer = null;
+
+  function getSlides() {
+    return Object.entries(allData)
+      .filter(([, v]) => v?.name && v?.status && v.status !== "todo")
+      .sort((a, b) => {
+        const order = { done: 0, script: 1, wip: 2 };
+        return (order[a[1].status] ?? 3) - (order[b[1].status] ?? 3);
+      });
+  }
+
+  function renderSlide(animate) {
+    if (!slides.length) return;
+    const [id, entry] = slides[idx];
+    const s = entry.status || "todo";
+    const dark = document.body.classList.contains("dark");
+
+    // Counter
+    counterEl.textContent = `${idx + 1} / ${slides.length}`;
+
+    // Progress bar
+    progressEl.style.width = `${((idx + 1) / slides.length) * 100}%`;
+
+    // Dots
+    dotsEl.querySelectorAll(".present-dot").forEach((d, i) =>
+      d.classList.toggle("active", i === idx));
+
+    // Status dot
+    statusDotEl.style.background = statusColor[s];
+    statusTxtEl.textContent = statusLabel[s] || "";
+
+    // Info
+    nameEl.textContent = entry.name || id;
+    artistEl.textContent = entry.artist || "";
+    categoryEl.textContent = entry.category || "";
+    noteEl.textContent = entry.note || "";
+
+    // Country shape
+    renderPresentShape(id, s);
+
+    // Animate card
+    if (animate) {
+      const card = document.getElementById("present-card");
+      card.style.animation = "none";
+      void card.offsetWidth;
+      card.style.animation = "presentSlideIn 0.5s cubic-bezier(0.16, 1, 0.3, 1)";
+    }
+  }
+
+  function renderPresentShape(id, status) {
+    const feature = geoFeatures.find(f => String(f.id).padStart(3, "0") === id);
+    if (!feature || !d3lib) { shapeEl.innerHTML = ""; return; }
+    const RENDER = 1200, PAD = 56;
+    try {
+      const main = getDominantPolygon(feature);
+      const [cLon, cLat] = d3lib.geoCentroid(main);
+      let proj;
+      if (Math.abs(cLat) > 75) {
+        proj = d3lib.geoAzimuthalEqualArea().rotate([0, cLat > 0 ? -90 : 90]).fitSize([RENDER, RENDER], main);
+      } else {
+        proj = d3lib.geoNaturalEarth1().rotate([-cLon, 0]).fitSize([RENDER, RENDER], main);
+      }
+      const pathFn = d3lib.geoPath(proj);
+      const dStr = pathFn(main);
+      const [[x0, y0], [x1, y1]] = pathFn.bounds(main);
+      if (!isFinite(x0) || x1 <= x0 || y1 <= y0) throw new Error("bad");
+      const vb = `${x0 - PAD} ${y0 - PAD} ${x1 - x0 + PAD * 2} ${y1 - y0 + PAD * 2}`;
+      const dark = document.body.classList.contains("dark");
+      const fill = (floatFill[status || "todo"] || floatFill.todo)[dark ? "dark" : "light"];
+      shapeEl.innerHTML = `<svg viewBox="${vb}" xmlns="http://www.w3.org/2000/svg"><path d="${dStr}" fill="${fill}"/></svg>`;
+    } catch(e) { shapeEl.innerHTML = ""; }
+  }
+
+  function buildDots() {
+    dotsEl.innerHTML = slides.map((_, i) =>
+      `<span class="present-dot${i === idx ? " active" : ""}" data-i="${i}"></span>`
+    ).join("");
+    dotsEl.querySelectorAll(".present-dot").forEach(d =>
+      d.addEventListener("click", () => { goTo(parseInt(d.dataset.i)); }));
+  }
+
+  function goTo(i) {
+    idx = ((i % slides.length) + slides.length) % slides.length;
+    renderSlide(true);
+    resetAutoPlay();
+  }
+
+  function startAutoPlay() {
+    stopAutoPlay();
+    autoTimer = setInterval(() => {
+      if (idx < slides.length - 1) goTo(idx + 1);
+      else stopAutoPlay();
+    }, 6000);
+  }
+  function stopAutoPlay() { if (autoTimer) { clearInterval(autoTimer); autoTimer = null; } }
+  function resetAutoPlay() { startAutoPlay(); }
+
+  function openPresentation() {
+    slides = getSlides();
+    if (!slides.length) { alert("Aucun pays annoté à présenter."); return; }
+    idx = 0;
+    overlay.classList.remove("hidden");
+    buildDots();
+    renderSlide(false);
+    startAutoPlay();
+    document.body.style.overflow = "hidden";
+  }
+
+  function closePresentation() {
+    overlay.classList.add("hidden");
+    stopAutoPlay();
+    document.body.style.overflow = "";
+  }
+
+  closeBtn.addEventListener("click", closePresentation);
+  prevBtn.addEventListener("click", () => goTo(idx - 1));
+  nextBtn.addEventListener("click", () => goTo(idx + 1));
+
+  // Keyboard nav
+  document.addEventListener("keydown", e => {
+    if (overlay.classList.contains("hidden")) return;
+    if (e.key === "ArrowRight" || e.key === " ") { e.preventDefault(); goTo(idx + 1); }
+    if (e.key === "ArrowLeft") { e.preventDefault(); goTo(idx - 1); }
+    if (e.key === "Escape") closePresentation();
+  });
+
+  // Desktop button
+  document.getElementById("present-btn").addEventListener("click", openPresentation);
+  // Mobile button
+  const mBtn = document.getElementById("mobile-present-btn");
+  if (mBtn) mBtn.addEventListener("click", () => {
+    document.getElementById("mobile-drawer").classList.add("hidden");
+    document.getElementById("mobile-drawer-overlay").classList.add("hidden");
+    openPresentation();
+  });
+
+  // Expose for external use
+  window.openPresentation = openPresentation;
+})();
 
 // ── Mobile drawer ────────────────────────────────────────────────────────────
 (function initMobileDrawer() {
