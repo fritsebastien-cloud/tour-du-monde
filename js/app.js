@@ -881,24 +881,33 @@ function renderArtistPhoto() {
   }
 }
 
+function deezerJSONP(query) {
+  return new Promise((resolve, reject) => {
+    const cb = "__dz_" + Date.now();
+    const s  = document.createElement("script");
+    s.src = `https://api.deezer.com/search/artist?q=${encodeURIComponent(query)}&limit=10&output=jsonp&callback=${cb}`;
+    const cleanup = () => { delete window[cb]; s.remove(); };
+    window[cb] = data => { cleanup(); resolve(data); };
+    s.onerror  = ()   => { cleanup(); reject(); };
+    setTimeout(()     => { cleanup(); reject(); }, 6000);
+    document.head.appendChild(s);
+  });
+}
+
 async function searchArtistImages(query) {
   const sug   = document.getElementById("artist-suggestions");
   const inner = document.getElementById("artist-sug-inner");
   inner.innerHTML = '<span class="sug-msg">Recherche…</span>';
   sug.classList.remove("hidden");
   try {
-    const searchUrl = `https://en.wikipedia.org/w/api.php?action=query&list=search&srsearch=${encodeURIComponent(query)}&srlimit=6&format=json&origin=*`;
-    const searchData = await fetch(searchUrl).then(r => r.json());
-    const titles = (searchData.query?.search || []).map(r => r.title).slice(0, 6);
-    if (!titles.length) { inner.innerHTML = '<span class="sug-msg">Aucun résultat</span>'; return; }
+    const data = await deezerJSONP(query);
+    // Filtrer les artistes sans vraie photo (placeholder Deezer = chemin vide "/artist//")
+    const photos = (data.data || [])
+      .filter(a => a.picture_big && !a.picture_big.includes("/artist//"))
+      .slice(0, 8)
+      .map(a => ({ src: a.picture_big, srcHero: a.picture_xl || a.picture_big, title: a.name }));
 
-    const imgUrl = `https://en.wikipedia.org/w/api.php?action=query&titles=${encodeURIComponent(titles.join("|"))}&prop=pageimages&pithumbsize=280&format=json&origin=*`;
-    const imgData = await fetch(imgUrl).then(r => r.json());
-    const photos = Object.values(imgData.query?.pages || {})
-      .filter(p => p.thumbnail?.source)
-      .map(p => ({ src: p.thumbnail.source, title: p.title }));
-
-    if (!photos.length) { inner.innerHTML = '<span class="sug-msg">Aucune image trouvée</span>'; return; }
+    if (!photos.length) { inner.innerHTML = '<span class="sug-msg">Aucun résultat Deezer</span>'; return; }
 
     inner.innerHTML = photos.map(p =>
       `<img src="${p.src}" alt="${p.title.replace(/"/g,'&quot;')}" title="${p.title.replace(/"/g,'&quot;')}" />`
@@ -906,7 +915,7 @@ async function searchArtistImages(query) {
 
     inner.querySelectorAll("img").forEach((img, i) => {
       img.addEventListener("click", () => {
-        currentArtistPhoto = photos[i].src;
+        currentArtistPhoto = photos[i].srcHero;
         renderArtistPhoto();
         sug.classList.add("hidden");
       });
