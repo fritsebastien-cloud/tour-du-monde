@@ -101,8 +101,19 @@
           <div id="panel-name" class="panel-name"></div>
           <div id="panel-status-label" class="panel-status-lbl"></div>
         </div>
-        <div id="hero-artist-photo" class="hidden">
-          <img id="hero-artist-img" src="" alt="" />
+        <div id="hero-photo-zone">
+          <div id="hero-photo-placeholder" title="Ajouter une photo">
+            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg>
+          </div>
+          <img id="hero-artist-img" class="hidden" src="" alt="" title="Changer la photo" />
+          <div id="hero-photo-popover" class="hidden">
+            <p class="popover-label">URL de la photo</p>
+            <div class="popover-row">
+              <input id="hero-photo-input" type="url" placeholder="https://…" autocomplete="off" />
+              <button id="hero-photo-confirm">↵</button>
+            </div>
+            <button id="hero-photo-remove" class="hidden">Retirer la photo</button>
+          </div>
         </div>
         <button id="panel-close" class="btn-close">×</button>
       </div>
@@ -119,15 +130,6 @@
         <div class="field-group">
           <label class="lbl">Artiste / Angle</label>
           <input id="panel-artist" class="finput" placeholder="Nom de l'artiste, groupe…" />
-          <div id="artist-photo-wrap">
-            <div id="artist-photo-selected" class="hidden">
-              <span id="artist-photo-badge">📷 Photo sélectionnée</span>
-              <button id="artist-photo-clear" title="Supprimer la photo">Retirer</button>
-            </div>
-            <div id="artist-suggestions" class="hidden">
-              <div id="artist-sug-inner"></div>
-            </div>
-          </div>
         </div>
         <div class="field-group">
           <label class="lbl">Notes</label>

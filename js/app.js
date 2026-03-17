@@ -22,7 +22,6 @@ let selectedName = null;
 let currentStatus = "todo";
 let currentLinks = [];
 let currentArtistPhoto = "";
-let artistDebounceTimer = null;
 
 // Références carte (initialisées dans loadMap)
 let d3lib = null;
@@ -616,7 +615,7 @@ function openPanel(id, name) {
   currentStatus      = entry.status && entry.status !== "todo" ? entry.status : null;
   currentLinks       = entry.links  || [];
   currentArtistPhoto = entry.artistPhoto || "";
-  document.getElementById("artist-suggestions").classList.add("hidden");
+  closePhotoPopover();
   renderArtistPhoto();
 
   document.querySelectorAll(".sbtn").forEach(b =>
@@ -863,78 +862,65 @@ document.getElementById("ctx-open").addEventListener("click", e => {
   openPanel(id, name);
 });
 
-// ── Artist photo picker ───────────────────────────────────────────────────────
+// ── Artist photo (placeholder + popover URL) ──────────────────────────────────
+const heroPhotoZone     = document.getElementById("hero-photo-zone");
+const heroPlaceholder   = document.getElementById("hero-photo-placeholder");
+const heroArtistImg     = document.getElementById("hero-artist-img");
+const heroPhotoPopover  = document.getElementById("hero-photo-popover");
+const heroPhotoInput    = document.getElementById("hero-photo-input");
+const heroPhotoConfirm  = document.getElementById("hero-photo-confirm");
+const heroPhotoRemove   = document.getElementById("hero-photo-remove");
+
 function renderArtistPhoto() {
-  const sel      = document.getElementById("artist-photo-selected");
-  const heroEl   = document.getElementById("country-hero");
-  const photoDiv = document.getElementById("hero-artist-photo");
-  const img      = document.getElementById("hero-artist-img");
+  const heroEl = document.getElementById("country-hero");
   if (currentArtistPhoto) {
-    img.src = currentArtistPhoto;
-    sel.classList.remove("hidden");
-    photoDiv.classList.remove("hidden");
+    heroArtistImg.src = currentArtistPhoto;
+    heroArtistImg.classList.remove("hidden");
+    heroPlaceholder.classList.add("hidden");
+    heroPhotoRemove.classList.remove("hidden");
     heroEl.classList.add("has-photo");
   } else {
-    sel.classList.add("hidden");
+    heroArtistImg.classList.add("hidden");
+    heroPlaceholder.classList.remove("hidden");
+    heroPhotoRemove.classList.add("hidden");
     heroEl.classList.remove("has-photo");
-    setTimeout(() => { if (!currentArtistPhoto) photoDiv.classList.add("hidden"); }, 400);
   }
 }
 
-function deezerJSONP(query) {
-  return new Promise((resolve, reject) => {
-    const cb = "__dz_" + Date.now();
-    const s  = document.createElement("script");
-    s.src = `https://api.deezer.com/search/artist?q=${encodeURIComponent(query)}&limit=10&output=jsonp&callback=${cb}`;
-    const cleanup = () => { delete window[cb]; s.remove(); };
-    window[cb] = data => { cleanup(); resolve(data); };
-    s.onerror  = ()   => { cleanup(); reject(); };
-    setTimeout(()     => { cleanup(); reject(); }, 6000);
-    document.head.appendChild(s);
-  });
+function openPhotoPopover() {
+  heroPhotoInput.value = currentArtistPhoto || "";
+  heroPhotoPopover.classList.remove("hidden");
+  heroPhotoInput.focus();
+  heroPhotoInput.select();
 }
-
-async function searchArtistImages(query) {
-  const sug   = document.getElementById("artist-suggestions");
-  const inner = document.getElementById("artist-sug-inner");
-  inner.innerHTML = '<span class="sug-msg">Recherche…</span>';
-  sug.classList.remove("hidden");
-  try {
-    const data = await deezerJSONP(query);
-    // Filtrer les artistes sans vraie photo (placeholder Deezer = chemin vide "/artist//")
-    const photos = (data.data || [])
-      .filter(a => a.picture_big && !a.picture_big.includes("/artist//"))
-      .slice(0, 8)
-      .map(a => ({ src: a.picture_big, srcHero: a.picture_xl || a.picture_big, title: a.name }));
-
-    if (!photos.length) { inner.innerHTML = '<span class="sug-msg">Aucun résultat Deezer</span>'; return; }
-
-    inner.innerHTML = photos.map(p =>
-      `<img src="${p.src}" alt="${p.title.replace(/"/g,'&quot;')}" title="${p.title.replace(/"/g,'&quot;')}" />`
-    ).join("");
-
-    inner.querySelectorAll("img").forEach((img, i) => {
-      img.addEventListener("click", () => {
-        currentArtistPhoto = photos[i].srcHero;
-        renderArtistPhoto();
-        sug.classList.add("hidden");
-      });
-    });
-  } catch(e) {
-    inner.innerHTML = '<span class="sug-msg">Erreur de chargement</span>';
+function closePhotoPopover() {
+  heroPhotoPopover.classList.add("hidden");
+  heroPhotoInput.value = "";
+}
+function confirmPhotoUrl() {
+  const url = heroPhotoInput.value.trim();
+  if (url.startsWith("http")) {
+    currentArtistPhoto = url;
+    renderArtistPhoto();
   }
+  closePhotoPopover();
 }
 
-document.getElementById("panel-artist").addEventListener("input", e => {
-  clearTimeout(artistDebounceTimer);
-  const q = e.target.value.trim();
-  if (!q) { document.getElementById("artist-suggestions").classList.add("hidden"); return; }
-  artistDebounceTimer = setTimeout(() => searchArtistImages(q), 650);
+heroPlaceholder.addEventListener("click", openPhotoPopover);
+heroArtistImg.addEventListener("click", openPhotoPopover);
+heroPhotoConfirm.addEventListener("click", confirmPhotoUrl);
+heroPhotoInput.addEventListener("keydown", e => {
+  if (e.key === "Enter") { e.preventDefault(); confirmPhotoUrl(); }
+  if (e.key === "Escape") closePhotoPopover();
 });
-
-document.getElementById("artist-photo-clear").addEventListener("click", () => {
+heroPhotoRemove.addEventListener("click", () => {
   currentArtistPhoto = "";
   renderArtistPhoto();
+  closePhotoPopover();
+});
+// Fermer le popover en cliquant ailleurs
+document.addEventListener("click", e => {
+  if (!heroPhotoZone.contains(e.target)) closePhotoPopover();
 });
 
 // ── Links ─────────────────────────────────────────────────────────────────────
