@@ -596,6 +596,39 @@ body.dark .d-artist { color: rgba(255,255,255,0.28); }
 .d-cat { font-size: 11px; color: #ccc; margin-top: 1px; }
 body.dark .d-cat { color: rgba(255,255,255,0.18); }
 
+/* ── PAYS FLOTTANT 3D ──────────────────────────────────────────────────────── */
+#country-float {
+  position: fixed;
+  right: calc(400px + 28px);
+  top: 50%;
+  transform: translateY(-50%) translateX(16px);
+  z-index: 49;
+  pointer-events: none;
+  opacity: 0;
+  transition: opacity 0.45s cubic-bezier(0.2, 0, 0, 1),
+              transform 0.45s cubic-bezier(0.2, 0, 0, 1);
+}
+#country-float.visible {
+  opacity: 1;
+  transform: translateY(-50%) translateX(0);
+}
+#country-float svg {
+  display: block;
+  animation: countryFloat3D 5s ease-in-out infinite;
+  filter: drop-shadow(0 0 0 transparent); /* base for light mode */
+}
+body.dark #country-float svg {
+  filter: drop-shadow(0 2px 24px rgba(0,0,0,0.4));
+}
+@keyframes countryFloat3D {
+  0%,100% { transform: perspective(700px) rotateY(-14deg) rotateX(7deg)  translateY(0);    }
+  50%     { transform: perspective(700px) rotateY(-7deg)  rotateX(3deg)  translateY(-11px); }
+}
+/* Sur mobile / quand le panel est plein écran : cacher le float */
+@media (max-width: 680px) {
+  #country-float { display: none; }
+}
+
 /* ── CONTEXT MENU ──────────────────────────────────────────────────────────── */
 #ctx-menu {
   position: fixed; z-index: 200;

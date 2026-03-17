@@ -24,6 +24,7 @@ let currentLinks = [];
 
 // Références carte (initialisées dans loadMap)
 let d3lib = null;
+let geoFeatures = [];
 let svgSel = null, zoomBeh = null, projFn = null;
 let mapW = 0, mapH = 0;
 const countryCentroids = {};
@@ -330,6 +331,7 @@ async function loadMap() {
   });
 
   const features = topomod.feature(world, world.objects.countries).features;
+  geoFeatures = features;
 
   // Centroids géographiques pour la recherche
   features.forEach(f => {
@@ -638,6 +640,7 @@ function openPanel(id, name) {
   panel.classList.remove("hidden");
   overlay.classList.remove("hidden");
   applyColors();
+  renderFloatingCountry(id);
 }
 
 function autoSave() {
@@ -667,8 +670,55 @@ function autoSave() {
   applyColors(); updateStats(); renderDrawer();
 }
 
+// ── Pays flottant 3D ──────────────────────────────────────────────────────────
+const glowRGB = {
+  todo:   { dark: "70,110,220",  light: "140,140,130" },
+  wip:    { dark: "240,160,40",  light: "210,148,20"  },
+  script: { dark: "230,70,160",  light: "200,60,140"  },
+  done:   { dark: "60,200,120",  light: "50,170,100"  },
+};
+
+function renderFloatingCountry(id) {
+  const floatEl = document.getElementById("country-float");
+  const feature = geoFeatures.find(f => String(f.id).padStart(3, "0") === id);
+  if (!feature || !d3lib) { floatEl.classList.remove("visible"); return; }
+
+  const SIZE = 260, PAD = 26;
+  let proj, dStr;
+  try {
+    proj  = d3lib.geoNaturalEarth1().fitExtent([[PAD, PAD], [SIZE - PAD, SIZE - PAD]], feature);
+    dStr  = d3lib.geoPath(proj)(feature);
+  } catch(e) { floatEl.classList.remove("visible"); return; }
+  if (!dStr || dStr.length < 6) { floatEl.classList.remove("visible"); return; }
+
+  const s    = allData[id]?.status || null;
+  const dark = document.body.classList.contains("dark");
+  const fill = (dark ? mapFillDark : mapFill)[s] || (dark ? mapFillDark : mapFill).todo;
+  const rgb  = (glowRGB[s || "todo"] || glowRGB.todo)[dark ? "dark" : "light"];
+
+  floatEl.innerHTML = `
+    <svg viewBox="0 0 ${SIZE} ${SIZE}" width="${SIZE}" height="${SIZE}" overflow="visible" xmlns="http://www.w3.org/2000/svg">
+      <defs>
+        <filter id="float-shadow" x="-40%" y="-30%" width="180%" height="220%">
+          <feDropShadow dx="0" dy="22" stdDeviation="18" flood-color="rgb(${rgb})" flood-opacity="0.52"/>
+        </filter>
+        <filter id="float-glow" x="-15%" y="-15%" width="130%" height="130%">
+          <feGaussianBlur stdDeviation="3" result="blur"/>
+          <feMerge><feMergeNode in="blur"/><feMergeNode in="SourceGraphic"/></feMerge>
+        </filter>
+      </defs>
+      <path d="${dStr}" fill="${fill}" filter="url(#float-shadow)" opacity="${dark ? 1 : 0.75}"/>
+      <path d="${dStr}" fill="${fill}" filter="url(#float-glow)"   opacity="${dark ? 0.9 : 0.8}"/>
+    </svg>`;
+
+  floatEl.classList.remove("visible");
+  void floatEl.offsetWidth; // force reflow pour ré-animer
+  floatEl.classList.add("visible");
+}
+
 function closePanel() {
   autoSave();
+  document.getElementById("country-float").classList.remove("visible");
   document.querySelectorAll(".country.selected").forEach(el => {
     el.classList.remove("selected");
     el.setAttribute("stroke", "transparent");
