@@ -678,10 +678,10 @@ const glowRGB = {
 
 // Couleurs de fill dédiées au float — toujours visibles quel que soit le thème
 const floatFill = {
-  todo:   { dark: "#17202e", light: "#3d4a6b" },
-  wip:    { dark: "#c47a10", light: "#b06e0e" },
-  script: { dark: "#b04080", light: "#a03878" },
-  done:   { dark: "#2a7a50", light: "#256e48" },
+  todo:   { dark: "#7090c8", light: "#3d4a6b" },
+  wip:    { dark: "#f0a020", light: "#b06e0e" },
+  script: { dark: "#e858b0", light: "#a03878" },
+  done:   { dark: "#48c878", light: "#256e48" },
 };
 
 // Polygone dominant par surface géographique réelle (d3.geoArea, pas besoin de projection)
