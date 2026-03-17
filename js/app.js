@@ -601,8 +601,6 @@ const panel   = document.getElementById("panel");
 const overlay = document.getElementById("overlay");
 
 function updatePanelStatusDot(status) {
-  const dot = document.getElementById("panel-status-dot");
-  dot.style.background = statusColor[status] || "#c0c0b8";
   document.getElementById("panel-status-label").textContent = statusLabel[status] || "À explorer";
 }
 
@@ -702,7 +700,7 @@ function getDominantPolygon(feature) {
 }
 
 function renderFloatingCountry(id) {
-  const floatEl = document.getElementById("country-watermark");
+  const floatEl = document.getElementById("country-shape-area");
   const feature = geoFeatures.find(f => String(f.id).padStart(3, "0") === id);
   if (!feature || !d3lib) { floatEl.classList.remove("loaded"); return; }
 
@@ -737,18 +735,15 @@ function renderFloatingCountry(id) {
   } catch(e) { floatEl.classList.remove("loaded"); return; }
   if (!dStr || dStr.length < 6) { floatEl.classList.remove("loaded"); return; }
 
-  const SVG = 280;
+  const SVG = 150;
   const s    = allData[id]?.status || null;
   const dark = document.body.classList.contains("dark");
   const fill = (floatFill[s || "todo"] || floatFill.todo)[dark ? "dark" : "light"];
   const rgb  = (glowRGB[s || "todo"] || glowRGB.todo)[dark ? "dark" : "light"];
 
-  // Pour le filigrane : blanc en dark, noir en light — l'opacité CSS fait le reste
-  const wFill = document.body.classList.contains("dark") ? "#ffffff" : "#000000";
-
   floatEl.innerHTML = `
     <svg viewBox="${viewBox}" width="${SVG}" height="${SVG}" xmlns="http://www.w3.org/2000/svg">
-      <path d="${dStr}" fill="${wFill}"/>
+      <path d="${dStr}" fill="${fill}"/>
     </svg>`;
 
   floatEl.classList.remove("loaded");
@@ -758,7 +753,7 @@ function renderFloatingCountry(id) {
 
 function closePanel() {
   autoSave();
-  document.getElementById("country-watermark").classList.remove("loaded");
+  document.getElementById("country-shape-area").classList.remove("loaded");
   document.querySelectorAll(".country.selected").forEach(el => {
     el.classList.remove("selected");
     el.setAttribute("stroke", "transparent");

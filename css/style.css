@@ -608,26 +608,80 @@ body.dark .d-artist { color: rgba(255,255,255,0.28); }
 .d-cat { font-size: 11px; color: #ccc; margin-top: 1px; }
 body.dark .d-cat { color: rgba(255,255,255,0.18); }
 
-/* ── PAYS FILIGRANE (dans le modal, derrière le contenu) ───────────────────── */
-#country-watermark {
-  position: absolute;
-  right: -30px;
-  top: 50%;
-  transform: translateY(-55%);
-  pointer-events: none;
-  z-index: 0;
-  opacity: 0;
-  transition: opacity 0.6s ease;
+/* ── HERO PAYS (en-tête du modal avec forme + texte overlay) ───────────────── */
+#country-hero {
+  position: relative;
+  height: 190px;
+  flex-shrink: 0;
+  overflow: hidden;
+  display: flex;
+  align-items: flex-end;
+  padding: 0 1.4rem 1.1rem;
+  border-bottom: 1px solid rgba(0,0,0,0.07);
+  gap: 0;
 }
-#country-watermark.loaded { opacity: 1; }
-#country-watermark svg {
-  display: block;
-  opacity: 0.07;
-}
-body.dark #country-watermark svg { opacity: 0.11; }
+body.dark #country-hero { border-bottom-color: rgba(255,255,255,0.06); }
 
-/* Tout le contenu du panel au-dessus du filigrane */
-.panel-head, .panel-body, .panel-foot { position: relative; z-index: 1; }
+/* Zone de la forme — centrée, couvre tout le hero */
+#country-shape-area {
+  position: absolute;
+  inset: 0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  pointer-events: none;
+}
+#country-shape-area svg {
+  display: block;
+  opacity: 0;
+  transition: opacity 0.5s ease 0.05s;
+  animation: countryFloat3D 5s ease-in-out infinite;
+}
+#country-shape-area.loaded svg { opacity: 1; }
+
+/* Dégradé pour lisibilité du texte en bas */
+#country-hero::after {
+  content: '';
+  position: absolute;
+  inset: 0;
+  pointer-events: none;
+  background: linear-gradient(to bottom, transparent 30%, rgba(0,0,0,0.55) 100%);
+}
+body:not(.dark) #country-hero::after {
+  background: linear-gradient(to bottom, transparent 30%, rgba(255,255,255,0.75) 100%);
+}
+
+/* Texte overlay */
+.hero-text {
+  position: relative;
+  z-index: 2;
+  flex: 1;
+  min-width: 0;
+}
+#country-hero .panel-name {
+  font-size: 22px;
+  font-weight: 700;
+  letter-spacing: -0.4px;
+  color: #fff;
+  text-shadow: 0 1px 8px rgba(0,0,0,0.4);
+}
+body:not(.dark) #country-hero .panel-name { color: #1a1a1a; text-shadow: none; }
+
+#country-hero .panel-status-lbl {
+  font-size: 11px;
+  color: rgba(255,255,255,0.55);
+  margin-top: 2px;
+  letter-spacing: 0.04em;
+}
+body:not(.dark) #country-hero .panel-status-lbl { color: #999; }
+
+/* Bouton close repositionné en haut à droite du hero */
+#country-hero .btn-close {
+  position: absolute;
+  top: 12px;
+  right: 12px;
+  z-index: 2;
+}
 
 @keyframes countryFloat3D {
   0%,100% { transform: perspective(600px) rotateY(-10deg) rotateX(6deg) translateY(0);    }
