@@ -86,7 +86,7 @@ body.dark header {
   border-bottom: 1px solid rgba(255,255,255,0.06);
 }
 .header-left { display: flex; align-items: center; gap: 8px; color: #999; flex: 1; min-width: 0; }
-.header-right { flex: 1; }
+.header-right { display: flex; align-items: center; gap: 5px; flex: 1; justify-content: flex-end; }
 body.dark .header-left { color: rgba(255,255,255,0.2); }
 .header-title { font-size: 13px; font-weight: 600; color: #1a1a1a; letter-spacing: 0.02em; white-space: nowrap; }
 body.dark .header-title { color: rgba(255,255,255,0.85); letter-spacing: 0.04em; }
@@ -207,6 +207,82 @@ main { flex: 1; position: relative; overflow: hidden; }
 }
 body.dark #map-svg { background: #060811; }
 #map-svg:active { cursor: grabbing; }
+
+/* ── AMBIENT MAP EFFECTS ── */
+
+/* Orbes lumineux qui dérivent lentement */
+.map-orb {
+  position: absolute; z-index: 0; border-radius: 50%;
+  pointer-events: none; will-change: transform;
+}
+.orb-1 {
+  width: 60%; height: 55%; top: -15%; left: -10%;
+  background: radial-gradient(ellipse at center, rgba(55,85,200,0.06) 0%, transparent 70%);
+  filter: blur(72px);
+  animation: orb1Drift 24s ease-in-out infinite alternate;
+}
+body:not(.dark) .orb-1 {
+  background: radial-gradient(ellipse at center, rgba(80,140,220,0.04) 0%, transparent 70%);
+}
+.orb-2 {
+  width: 50%; height: 50%; bottom: -10%; right: 0%;
+  background: radial-gradient(ellipse at center, rgba(190,85,50,0.05) 0%, transparent 70%);
+  filter: blur(80px);
+  animation: orb2Drift 30s ease-in-out infinite alternate;
+}
+body:not(.dark) .orb-2 {
+  background: radial-gradient(ellipse at center, rgba(220,160,60,0.035) 0%, transparent 70%);
+}
+@keyframes orb1Drift {
+  0%   { transform: translate(0%, 0%); }
+  100% { transform: translate(35%, 45%); }
+}
+@keyframes orb2Drift {
+  0%   { transform: translate(0%, 0%); }
+  100% { transform: translate(-30%, -35%); }
+}
+
+/* Reflet diagonal qui glisse sur la carte toutes les ~14s */
+.map-sweep {
+  position: absolute; inset: -20%; z-index: 2; pointer-events: none;
+  background: linear-gradient(
+    112deg,
+    transparent 38%,
+    rgba(255,255,255,0.022) 46%,
+    rgba(255,255,255,0.04) 50%,
+    rgba(255,255,255,0.022) 54%,
+    transparent 62%
+  );
+  opacity: 0;
+  animation: mapSweep 14s cubic-bezier(0.4, 0, 0.2, 1) infinite;
+  animation-delay: 4s;
+}
+body:not(.dark) .map-sweep {
+  background: linear-gradient(
+    112deg,
+    transparent 38%,
+    rgba(255,255,255,0.04) 46%,
+    rgba(255,255,255,0.07) 50%,
+    rgba(255,255,255,0.04) 54%,
+    transparent 62%
+  );
+}
+@keyframes mapSweep {
+  0%   { transform: translateX(-80%); opacity: 0; }
+  8%   { opacity: 1; }
+  50%  { opacity: 1; }
+  65%  { transform: translateX(80%);  opacity: 0; }
+  100% { transform: translateX(80%);  opacity: 0; }
+}
+
+/* Glint sur un pays au survol prolongé */
+@keyframes countryGlint {
+  0%   { filter: brightness(1) saturate(1); }
+  45%  { filter: brightness(1.32) saturate(0.85); }
+  100% { filter: brightness(1) saturate(1); }
+}
+.country { transition: opacity 0.3s; }
+.country:hover { animation: countryGlint 0.8s ease 0.35s both; }
 
 /* Vignette cinématique */
 .map-vignette {
