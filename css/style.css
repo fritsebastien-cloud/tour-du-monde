@@ -617,25 +617,100 @@ body.dark .btn-save {
 /* ── LIST BAR ──────────────────────────────────────────────────────────────── */
 #list-bar {
   position: fixed; bottom: 0; left: 0; right: 0;
-  padding: 10px; z-index: 30; display: flex;
+  padding: 10px; z-index: 30; display: flex; gap: 6px;
   justify-content: flex-end; pointer-events: none;
 }
-#list-toggle-btn {
+#list-toggle-btn, #sort-toggle-btn {
   padding: 7px 14px; background: #fff;
   border: 1px solid rgba(0,0,0,0.12); border-radius: 20px;
   color: #888; font-size: 11px; cursor: pointer;
   pointer-events: all; font-family: inherit; transition: all 0.15s;
   box-shadow: 0 2px 8px rgba(0,0,0,0.08);
 }
-body.dark #list-toggle-btn {
+body.dark #list-toggle-btn, body.dark #sort-toggle-btn {
   background: rgba(8,11,20,0.8);
   border-color: rgba(255,255,255,0.09);
   color: rgba(255,255,255,0.3);
   backdrop-filter: blur(12px);
   box-shadow: 0 4px 16px rgba(0,0,0,0.5);
 }
-#list-toggle-btn:hover { color: #1a1a1a; }
-body.dark #list-toggle-btn:hover { color: rgba(255,255,255,0.7); }
+#list-toggle-btn:hover, #sort-toggle-btn:hover { color: #1a1a1a; }
+body.dark #list-toggle-btn:hover, body.dark #sort-toggle-btn:hover { color: rgba(255,255,255,0.7); }
+
+/* ── SORT MODAL ─────────────────────────────────────────────────────────────── */
+#sort-overlay {
+  position: fixed; inset: 0; background: rgba(0,0,0,0.22);
+  backdrop-filter: blur(6px); z-index: 44;
+}
+body.dark #sort-overlay { background: rgba(0,0,0,0.6); backdrop-filter: blur(8px); }
+
+#sort-modal {
+  position: fixed; top: 50%; left: 50%;
+  transform: translate(-50%, -50%);
+  width: 500px; max-width: calc(100vw - 32px);
+  max-height: calc(100vh - 80px);
+  background: #fff; border: 1px solid rgba(0,0,0,0.09);
+  border-radius: 20px; z-index: 45;
+  display: flex; flex-direction: column; overflow: hidden;
+  box-shadow: 0 24px 60px rgba(0,0,0,0.14), 0 0 0 1px rgba(0,0,0,0.04);
+  animation: modalIn 0.28s cubic-bezier(0.16, 1, 0.3, 1);
+}
+body.dark #sort-modal {
+  background: rgba(9,12,22,0.92);
+  border: 1px solid rgba(255,255,255,0.08);
+  backdrop-filter: blur(32px) saturate(180%);
+  box-shadow: 0 32px 80px rgba(0,0,0,0.75), 0 0 0 1px rgba(255,255,255,0.04),
+              0 0 60px rgba(60,90,200,0.06);
+}
+.sort-head {
+  display: flex; align-items: flex-start; justify-content: space-between;
+  padding: 1.1rem 1.4rem; border-bottom: 1px solid rgba(0,0,0,0.07); flex-shrink: 0;
+}
+body.dark .sort-head { border-bottom-color: rgba(255,255,255,0.06); }
+.sort-title { font-size: 14px; font-weight: 600; }
+.sort-sub { font-size: 11px; color: #aaa; margin-top: 3px; }
+body.dark .sort-sub { color: rgba(255,255,255,0.25); }
+
+#sort-list { flex: 1; overflow-y: auto; padding: 6px 0; }
+
+.sort-foot {
+  padding: 1rem 1.4rem; border-top: 1px solid rgba(0,0,0,0.07);
+  display: flex; justify-content: flex-end; flex-shrink: 0;
+}
+body.dark .sort-foot { border-top-color: rgba(255,255,255,0.06); }
+
+/* Items draggables */
+.sort-item {
+  display: flex; align-items: center; gap: 10px;
+  padding: 9px 1.2rem; user-select: none;
+  transition: background 0.1s;
+  border-top: 2px solid transparent;
+  border-bottom: 2px solid transparent;
+}
+.sort-item:hover { background: #f5f5f2; }
+body.dark .sort-item:hover { background: rgba(255,255,255,0.04); }
+.sort-item.dragging { opacity: 0.35; }
+.sort-item.drop-above { border-top-color: #6ba3f5; }
+.sort-item.drop-below { border-bottom-color: #6ba3f5; }
+body.dark .sort-item.drop-above { border-top-color: #90b8ff; }
+body.dark .sort-item.drop-below { border-bottom-color: #90b8ff; }
+
+.sort-handle {
+  color: #ccc; cursor: grab; font-size: 18px; flex-shrink: 0;
+  line-height: 1; padding: 0 2px;
+}
+body.dark .sort-handle { color: rgba(255,255,255,0.15); }
+.sort-handle:active { cursor: grabbing; }
+.sort-num {
+  font-size: 11px; font-weight: 600; color: #ccc;
+  min-width: 22px; text-align: right; flex-shrink: 0;
+}
+body.dark .sort-num { color: rgba(255,255,255,0.2); }
+.sort-dot { width: 7px; height: 7px; border-radius: 50%; flex-shrink: 0; }
+.sort-info { flex: 1; min-width: 0; }
+.sort-name { font-size: 13px; font-weight: 500; }
+.sort-artist { font-size: 11px; color: #aaa; margin-top: 1px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+body.dark .sort-artist { color: rgba(255,255,255,0.28); }
 
 /* ── DRAWER (modal centré) ─────────────────────────────────────────────────── */
 #drawer-overlay {

@@ -803,6 +803,7 @@ document.addEventListener("keydown", e => {
   if (e.key === "Escape") {
     if (!panel.classList.contains("hidden")) { closePanel(); return; }
     if (!drawer.classList.contains("hidden")) { closeDrawer(); return; }
+    if (!sortModal.classList.contains("hidden")) { closeSortModal(); return; }
   }
   if (e.key === "Enter" && !panel.classList.contains("hidden") && e.target.tagName !== "TEXTAREA") {
     e.preventDefault();
@@ -1000,4 +1001,104 @@ function renderDrawer() {
     }));
 }
 
-function initApp() { listenToData(); loadMap(); }
+function initApp() { listenToData(); listenToOrder(); loadMap(); }
+
+// ── Sort modal (ordre des épisodes) ───────────────────────────────────────────
+let episodeOrder = [];
+let workingOrder = [];
+let dragSrcIdx   = -1;
+
+function listenToOrder() {
+  onValue(ref(db, "order"), snapshot => {
+    const saved = snapshot.val();
+    episodeOrder = Array.isArray(saved) ? saved : [];
+  });
+}
+
+function getEffectiveOrder() {
+  const annotated = Object.keys(allData).filter(id => allData[id]?.name);
+  const inOrder   = episodeOrder.filter(id => annotated.includes(id));
+  const extra     = annotated.filter(id => !inOrder.includes(id));
+  return [...inOrder, ...extra];
+}
+
+const sortOverlay = document.getElementById("sort-overlay");
+const sortModal   = document.getElementById("sort-modal");
+
+function openSortModal() {
+  workingOrder = getEffectiveOrder();
+  renderSortList();
+  sortModal.classList.remove("hidden");
+  sortOverlay.classList.remove("hidden");
+}
+function closeSortModal() {
+  sortModal.classList.add("hidden");
+  sortOverlay.classList.add("hidden");
+}
+
+function renderSortList() {
+  const container = document.getElementById("sort-list");
+  if (!workingOrder.length) {
+    container.innerHTML = '<p style="padding:1rem 1.4rem;font-size:13px;color:#aaa">Aucun pays annoté.</p>';
+    return;
+  }
+  container.innerHTML = workingOrder.map((id, i) => {
+    const v = allData[id] || {};
+    const s = v.status || "todo";
+    return `<div class="sort-item" draggable="true" data-id="${id}" data-idx="${i}">
+      <span class="sort-handle">⠿</span>
+      <span class="sort-num">${i + 1}</span>
+      <span class="sort-dot" style="background:${statusColor[s]}"></span>
+      <div class="sort-info">
+        <div class="sort-name">${v.name || id}</div>
+        ${v.artist ? `<div class="sort-artist">${v.artist}</div>` : ""}
+      </div>
+    </div>`;
+  }).join("");
+
+  container.querySelectorAll(".sort-item").forEach(item => {
+    item.addEventListener("dragstart", e => {
+      dragSrcIdx = parseInt(item.dataset.idx);
+      setTimeout(() => item.classList.add("dragging"), 0);
+      e.dataTransfer.effectAllowed = "move";
+    });
+    item.addEventListener("dragend", () => {
+      item.classList.remove("dragging");
+      container.querySelectorAll(".sort-item").forEach(el =>
+        el.classList.remove("drop-above", "drop-below"));
+    });
+    item.addEventListener("dragover", e => {
+      e.preventDefault();
+      container.querySelectorAll(".sort-item").forEach(el =>
+        el.classList.remove("drop-above", "drop-below"));
+      const { top, height } = item.getBoundingClientRect();
+      item.classList.add(e.clientY < top + height / 2 ? "drop-above" : "drop-below");
+    });
+    item.addEventListener("dragleave", () =>
+      item.classList.remove("drop-above", "drop-below"));
+    item.addEventListener("drop", e => {
+      e.preventDefault();
+      const tgtIdx = parseInt(item.dataset.idx);
+      if (dragSrcIdx === tgtIdx) return;
+      const { top, height } = item.getBoundingClientRect();
+      const after    = e.clientY >= top + height / 2;
+      const newOrder = [...workingOrder];
+      const [moved]  = newOrder.splice(dragSrcIdx, 1);
+      const effTgt   = dragSrcIdx < tgtIdx ? tgtIdx - 1 : tgtIdx;
+      newOrder.splice(after ? effTgt + 1 : effTgt, 0, moved);
+      workingOrder = newOrder;
+      renderSortList();
+    });
+  });
+}
+
+document.getElementById("sort-toggle-btn").addEventListener("click", openSortModal);
+document.getElementById("sort-close-btn").addEventListener("click", closeSortModal);
+sortOverlay.addEventListener("click", closeSortModal);
+document.getElementById("sort-save").addEventListener("click", () => {
+  episodeOrder = [...workingOrder];
+  set(ref(db, "order"), episodeOrder);
+  const btn = document.getElementById("sort-save");
+  btn.textContent = "Enregistré ✓"; btn.classList.add("saved");
+  setTimeout(() => { btn.textContent = "Enregistrer l'ordre"; btn.classList.remove("saved"); }, 2000);
+});

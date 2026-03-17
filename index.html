@@ -159,7 +159,24 @@
 
     <div id="list-bar">
       <button id="list-toggle-btn">≡ Pays annotés</button>
+      <button id="sort-toggle-btn">↕ Ordre des épisodes</button>
     </div>
+
+    <div id="sort-overlay" class="hidden"></div>
+    <div id="sort-modal" class="hidden">
+      <div class="sort-head">
+        <div>
+          <div class="sort-title">Ordre des épisodes</div>
+          <div class="sort-sub">Glissez les pays pour définir l'ordre de diffusion</div>
+        </div>
+        <button id="sort-close-btn" class="btn-close">×</button>
+      </div>
+      <div id="sort-list"></div>
+      <div class="sort-foot">
+        <button id="sort-save" class="btn-save">Enregistrer l'ordre</button>
+      </div>
+    </div>
+
     <div id="drawer-overlay" class="hidden"></div>
     <div id="list-drawer" class="hidden">
       <div class="drawer-head">
