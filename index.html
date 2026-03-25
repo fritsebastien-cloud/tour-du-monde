@@ -3,291 +3,10 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no" />
-  <title>Le Jeu du Bras — Scan. Joue. Explore.</title>
+  <title>Le QR Code de Seb</title>
   <link rel="preconnect" href="https://fonts.googleapis.com">
-  <link href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@400;500;600;700&family=Inter:wght@300;400;500&display=swap" rel="stylesheet">
-  <style>
-    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
-
-    :root {
-      --bg-deep: #05060a;
-      --bg-card: rgba(255,255,255,0.04);
-      --accent: #c8f562;
-      --accent-glow: rgba(200,245,98,0.3);
-      --text: #f0f0f0;
-      --text-dim: rgba(255,255,255,0.45);
-      --glass-border: rgba(255,255,255,0.08);
-    }
-
-    html, body {
-      height: 100%;
-      overflow: hidden;
-      background: var(--bg-deep);
-      color: var(--text);
-      font-family: 'Inter', -apple-system, sans-serif;
-      -webkit-font-smoothing: antialiased;
-      -webkit-tap-highlight-color: transparent;
-    }
-
-    /* ── EMOJI RAIN CANVAS ── */
-    #rain-canvas {
-      position: fixed;
-      inset: 0;
-      z-index: 0;
-      pointer-events: none;
-    }
-
-    /* ── AMBIENT GLOW ── */
-    .ambient {
-      position: fixed;
-      border-radius: 50%;
-      filter: blur(120px);
-      opacity: 0.12;
-      pointer-events: none;
-      z-index: 1;
-    }
-    .ambient-1 {
-      width: 500px; height: 500px;
-      background: var(--accent);
-      top: -150px; left: -100px;
-      animation: float1 12s ease-in-out infinite;
-    }
-    .ambient-2 {
-      width: 400px; height: 400px;
-      background: #5b7cf7;
-      bottom: -100px; right: -80px;
-      animation: float2 15s ease-in-out infinite;
-    }
-    .ambient-3 {
-      width: 300px; height: 300px;
-      background: #f5a623;
-      top: 40%; left: 60%;
-      animation: float3 10s ease-in-out infinite;
-      opacity: 0.06;
-    }
-
-    @keyframes float1 {
-      0%, 100% { transform: translate(0, 0) scale(1); }
-      50% { transform: translate(60px, 40px) scale(1.15); }
-    }
-    @keyframes float2 {
-      0%, 100% { transform: translate(0, 0) scale(1); }
-      50% { transform: translate(-50px, -30px) scale(1.1); }
-    }
-    @keyframes float3 {
-      0%, 100% { transform: translate(0, 0); }
-      50% { transform: translate(-30px, 20px); }
-    }
-
-    /* ── MAIN CONTENT ── */
-    .landing {
-      position: relative;
-      z-index: 10;
-      height: 100%;
-      display: flex;
-      flex-direction: column;
-      align-items: center;
-      justify-content: center;
-      padding: 2rem 1.5rem;
-      text-align: center;
-    }
-
-    /* ── LOGO / ICON ── */
-    .logo-ring {
-      width: 90px; height: 90px;
-      border-radius: 50%;
-      border: 2px solid var(--glass-border);
-      display: flex;
-      align-items: center;
-      justify-content: center;
-      font-size: 42px;
-      margin-bottom: 2rem;
-      background: rgba(255,255,255,0.03);
-      backdrop-filter: blur(20px);
-      animation: logoIn 1s cubic-bezier(0.16, 1, 0.3, 1) both;
-      position: relative;
-    }
-    .logo-ring::after {
-      content: '';
-      position: absolute;
-      inset: -4px;
-      border-radius: 50%;
-      border: 1px solid transparent;
-      border-top-color: var(--accent);
-      animation: ringRotate 3s linear infinite;
-    }
-    @keyframes ringRotate { to { transform: rotate(360deg); } }
-    @keyframes logoIn {
-      from { opacity: 0; transform: scale(0.6) translateY(20px); }
-      to { opacity: 1; transform: scale(1) translateY(0); }
-    }
-
-    /* ── TITLE ── */
-    .title {
-      font-family: 'Space Grotesk', sans-serif;
-      font-size: clamp(2.2rem, 8vw, 4rem);
-      font-weight: 700;
-      letter-spacing: -1.5px;
-      line-height: 1.05;
-      margin-bottom: 0.75rem;
-      animation: fadeUp 0.8s cubic-bezier(0.16, 1, 0.3, 1) 0.15s both;
-    }
-    .title .accent {
-      background: linear-gradient(135deg, var(--accent), #a8e040);
-      -webkit-background-clip: text;
-      -webkit-text-fill-color: transparent;
-      background-clip: text;
-    }
-
-    .subtitle {
-      font-size: clamp(0.95rem, 3.5vw, 1.15rem);
-      color: var(--text-dim);
-      font-weight: 300;
-      letter-spacing: 0.02em;
-      line-height: 1.6;
-      max-width: 340px;
-      margin-bottom: 2.5rem;
-      animation: fadeUp 0.8s cubic-bezier(0.16, 1, 0.3, 1) 0.3s both;
-    }
-
-    @keyframes fadeUp {
-      from { opacity: 0; transform: translateY(24px); }
-      to { opacity: 1; transform: translateY(0); }
-    }
-
-    /* ── CTA BUTTON ── */
-    .cta-wrapper {
-      animation: fadeUp 0.8s cubic-bezier(0.16, 1, 0.3, 1) 0.5s both;
-    }
-    .cta {
-      display: inline-flex;
-      align-items: center;
-      gap: 10px;
-      padding: 16px 40px;
-      background: var(--accent);
-      color: #0a0a0a;
-      font-family: 'Space Grotesk', sans-serif;
-      font-size: 1.05rem;
-      font-weight: 600;
-      letter-spacing: -0.3px;
-      border: none;
-      border-radius: 60px;
-      cursor: pointer;
-      text-decoration: none;
-      position: relative;
-      overflow: hidden;
-      transition: transform 0.2s, box-shadow 0.3s;
-      box-shadow: 0 0 40px var(--accent-glow), 0 4px 20px rgba(0,0,0,0.3);
-    }
-    .cta:hover {
-      transform: scale(1.04);
-      box-shadow: 0 0 60px var(--accent-glow), 0 8px 30px rgba(0,0,0,0.3);
-    }
-    .cta:active {
-      transform: scale(0.97);
-    }
-    .cta .arrow {
-      font-size: 1.2rem;
-      transition: transform 0.2s;
-    }
-    .cta:hover .arrow {
-      transform: translateX(3px);
-    }
-
-    /* Pulse ring behind CTA */
-    .cta-pulse {
-      position: absolute;
-      inset: -6px;
-      border-radius: 60px;
-      border: 2px solid var(--accent);
-      opacity: 0;
-      animation: ctaPulse 2.5s ease-out infinite;
-      pointer-events: none;
-    }
-    @keyframes ctaPulse {
-      0% { transform: scale(1); opacity: 0.5; }
-      100% { transform: scale(1.18); opacity: 0; }
-    }
-
-    /* ── BOTTOM HINT ── */
-    .hint {
-      position: fixed;
-      bottom: 2rem;
-      left: 50%;
-      transform: translateX(-50%);
-      font-size: 0.72rem;
-      color: rgba(255,255,255,0.2);
-      letter-spacing: 0.15em;
-      text-transform: uppercase;
-      animation: fadeUp 0.8s cubic-bezier(0.16, 1, 0.3, 1) 0.8s both;
-      z-index: 10;
-    }
-
-    /* ── SCAN LINE EFFECT ── */
-    .scanline {
-      position: fixed;
-      top: 0;
-      left: 0;
-      right: 0;
-      height: 2px;
-      background: linear-gradient(90deg, transparent, var(--accent), transparent);
-      opacity: 0.15;
-      z-index: 5;
-      animation: scanMove 4s ease-in-out infinite;
-    }
-    @keyframes scanMove {
-      0%, 100% { top: -2px; }
-      50% { top: 100%; }
-    }
-
-    /* ── STATS TICKERS ── */
-    .stats-row {
-      display: flex;
-      gap: 12px;
-      margin-bottom: 2.5rem;
-      animation: fadeUp 0.8s cubic-bezier(0.16, 1, 0.3, 1) 0.45s both;
-    }
-    .stat-chip {
-      display: flex;
-      align-items: center;
-      gap: 6px;
-      padding: 6px 14px;
-      background: var(--bg-card);
-      border: 1px solid var(--glass-border);
-      border-radius: 20px;
-      font-size: 0.75rem;
-      color: var(--text-dim);
-      backdrop-filter: blur(10px);
-    }
-    .stat-chip .num {
-      font-family: 'Space Grotesk', sans-serif;
-      font-weight: 600;
-      color: var(--text);
-      font-size: 0.85rem;
-    }
-
-    /* ── GRID PATTERN OVERLAY ── */
-    .grid-overlay {
-      position: fixed;
-      inset: 0;
-      z-index: 2;
-      pointer-events: none;
-      opacity: 0.025;
-      background-image:
-        linear-gradient(rgba(255,255,255,0.1) 1px, transparent 1px),
-        linear-gradient(90deg, rgba(255,255,255,0.1) 1px, transparent 1px);
-      background-size: 60px 60px;
-    }
-
-    /* ── VIGNETTE ── */
-    .vignette {
-      position: fixed;
-      inset: 0;
-      z-index: 3;
-      pointer-events: none;
-      background: radial-gradient(ellipse at center, transparent 40%, rgba(5,6,10,0.7) 100%);
-    }
-  </style>
+  <link href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@400;500;600;700&family=Inter:wght@300;400;500;600;700;800;900&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="css/style.css" />
 </head>
 <body>
 
@@ -300,169 +19,61 @@
   <div class="vignette"></div>
   <div class="scanline"></div>
 
-  <!-- Main content -->
-  <div class="landing">
-    <div class="logo-ring">💪</div>
-
-    <h1 class="title">
-      Le Jeu<br>du <span class="accent">Bras</span>
-    </h1>
-
-    <p class="subtitle">
-      Tu as scanné le tatouage.<br>
-      Maintenant, prouve que t'es à la hauteur.
-    </p>
-
-    <div class="stats-row">
-      <div class="stat-chip">
-        <span class="num" id="players-count">0</span> joueurs
+  <!-- SCREEN: Welcome -->
+  <div id="screen-welcome" class="screen active">
+    <div class="card">
+      <div class="logo-ring">💪</div>
+      <h1 class="title">Le QR Code<br>de <span class="accent">Seb</span></h1>
+      <p class="subtitle">Tu viens de scanner mon tatouage, bravo !<br>Tente ta chance et entre dans le classement.</p>
+      <div class="stats-row">
+        <div class="stat-chip">
+          <span class="num" id="players-count">0</span> joueurs
+        </div>
+        <div class="stat-chip">
+          <span class="num" id="best-score">—</span> record
+        </div>
       </div>
-      <div class="stat-chip">
-        <span class="num" id="countries-count">0</span> pays
+      <div class="cta-wrapper">
+        <button id="btn-play" class="cta">Tirer mon nombre <span class="arrow">→</span></button>
+        <div class="cta-pulse"></div>
       </div>
+      <button id="btn-leaderboard" class="btn-secondary">Voir le classement</button>
     </div>
+  </div>
 
-    <div class="cta-wrapper" style="position:relative">
-      <a href="#game" class="cta" id="play-btn">
-        Jouer <span class="arrow">→</span>
-      </a>
-      <div class="cta-pulse"></div>
+  <!-- SCREEN: Roll -->
+  <div id="screen-roll" class="screen">
+    <div class="card">
+      <p class="roll-label">Ton nombre est...</p>
+      <div id="roll-number" class="roll-number">&mdash;</div>
+      <div id="name-form" class="name-form hidden">
+        <input type="text" id="name-input" class="input-name" placeholder="Ton pr&eacute;nom" maxlength="30" autocomplete="off" />
+        <button id="btn-save" class="cta cta-small">Enregistrer mon score <span class="arrow">→</span></button>
+      </div>
+      <p id="save-msg" class="save-msg hidden"></p>
+      <button id="btn-to-leaderboard" class="btn-secondary hidden">Voir le classement</button>
+      <button id="btn-back-home" class="btn-link">← Retour</button>
+    </div>
+  </div>
+
+  <!-- SCREEN: Leaderboard -->
+  <div id="screen-leaderboard" class="screen">
+    <div class="card card-wide">
+      <h2 class="lb-title">🏆 Classement</h2>
+      <p class="lb-subtitle">Tous les scanners de Seb, du plus chanceux au moins chanceux</p>
+      <div id="leaderboard-list" class="leaderboard-list">
+        <p class="loading-text">Chargement...</p>
+      </div>
+      <div class="lb-footer">
+        <span id="total-players" class="total-players"></span>
+        <button id="btn-back" class="btn-secondary">← Retour</button>
+      </div>
     </div>
   </div>
 
   <div class="hint">Scanné depuis un tatouage</div>
 
-  <script>
-    // ── ARM EMOJI RAIN ──────────────────────────────────────────────────────────
-    const canvas = document.getElementById('rain-canvas');
-    const ctx = canvas.getContext('2d');
-
-    let W, H;
-    function resize() {
-      W = canvas.width = window.innerWidth;
-      H = canvas.height = window.innerHeight;
-    }
-    resize();
-    window.addEventListener('resize', resize);
-
-    const ARMS = ['💪', '🦾', '🤛', '✊', '🤜', '💪🏻', '💪🏼', '💪🏽', '💪🏾', '💪🏿'];
-    const drops = [];
-    const MAX_DROPS = 45;
-
-    function spawnDrop() {
-      if (drops.length >= MAX_DROPS) return;
-      drops.push({
-        x: Math.random() * W,
-        y: -40,
-        speed: 0.4 + Math.random() * 1.2,
-        size: 16 + Math.random() * 24,
-        opacity: 0.08 + Math.random() * 0.18,
-        emoji: ARMS[Math.floor(Math.random() * ARMS.length)],
-        rotation: Math.random() * Math.PI * 2,
-        rotSpeed: (Math.random() - 0.5) * 0.02,
-        drift: (Math.random() - 0.5) * 0.3,
-      });
-    }
-
-    function animate() {
-      ctx.clearRect(0, 0, W, H);
-
-      // Spawn new drops
-      if (Math.random() < 0.12) spawnDrop();
-
-      for (let i = drops.length - 1; i >= 0; i--) {
-        const d = drops[i];
-        d.y += d.speed;
-        d.x += d.drift;
-        d.rotation += d.rotSpeed;
-
-        ctx.save();
-        ctx.translate(d.x, d.y);
-        ctx.rotate(d.rotation);
-        ctx.globalAlpha = d.opacity;
-        ctx.font = `${d.size}px serif`;
-        ctx.textAlign = 'center';
-        ctx.textBaseline = 'middle';
-        ctx.fillText(d.emoji, 0, 0);
-        ctx.restore();
-
-        // Remove off-screen
-        if (d.y > H + 60 || d.x < -60 || d.x > W + 60) {
-          drops.splice(i, 1);
-        }
-      }
-
-      requestAnimationFrame(animate);
-    }
-
-    // Pre-fill some drops
-    for (let i = 0; i < 20; i++) {
-      spawnDrop();
-      drops[drops.length - 1].y = Math.random() * H;
-    }
-    animate();
-
-    // ── COUNTER ANIMATION ───────────────────────────────────────────────────────
-    function animateCounter(el, target, duration = 1800) {
-      const start = performance.now();
-      function tick(now) {
-        const t = Math.min((now - start) / duration, 1);
-        const ease = 1 - Math.pow(1 - t, 3);
-        el.textContent = Math.round(ease * target);
-        if (t < 1) requestAnimationFrame(tick);
-      }
-      requestAnimationFrame(tick);
-    }
-
-    // Trigger counters after a delay
-    setTimeout(() => {
-      animateCounter(document.getElementById('players-count'), 142);
-      animateCounter(document.getElementById('countries-count'), 38);
-    }, 800);
-
-    // ── CTA INTERACTION ─────────────────────────────────────────────────────────
-    document.getElementById('play-btn').addEventListener('click', (e) => {
-      e.preventDefault();
-      const btn = e.currentTarget;
-      btn.style.transform = 'scale(0.95)';
-      btn.innerHTML = 'Chargement… <span class="arrow" style="animation:none">⏳</span>';
-
-      // Transition vers le jeu
-      setTimeout(() => {
-        document.body.style.transition = 'opacity 0.5s';
-        document.body.style.opacity = '0';
-        setTimeout(() => {
-          // Redirect to game or show game content
-          window.location.href = '#start';
-          // Replace with actual game URL when ready
-        }, 500);
-      }, 600);
-    });
-
-    // ── TOUCH RIPPLE ────────────────────────────────────────────────────────────
-    document.addEventListener('touchstart', (e) => {
-      const ripple = document.createElement('div');
-      ripple.style.cssText = `
-        position:fixed; z-index:100; pointer-events:none;
-        width:30px; height:30px; border-radius:50%;
-        border: 1.5px solid rgba(200,245,98,0.4);
-        left:${e.touches[0].clientX - 15}px;
-        top:${e.touches[0].clientY - 15}px;
-        animation: touchRipple 0.6s ease-out forwards;
-      `;
-      document.body.appendChild(ripple);
-      setTimeout(() => ripple.remove(), 600);
-    }, { passive: true });
-
-    // Add ripple animation
-    const style = document.createElement('style');
-    style.textContent = `
-      @keyframes touchRipple {
-        to { transform: scale(3); opacity: 0; }
-      }
-    `;
-    document.head.appendChild(style);
-  </script>
-
+  <script type="module" src="js/app.js"></script>
+  <script src="js/rain.js"></script>
 </body>
 </html>
