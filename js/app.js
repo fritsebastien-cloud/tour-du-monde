@@ -49,56 +49,56 @@ const statusLabel = {
 
 const statusColor = {
   todo:     "#4a4a44",
-  wip:      "#F5A623",
-  script:   "#f564a9",
-  launched: "#D4FF00",
-  done:     "#4ADE80"
+  wip:      "#F0F0EA",
+  script:   "#F5C400",
+  launched: "#EF4444",
+  done:     "#002FA7"
 };
 
 // Couleur du trait au survol (version sombre du fill selon statut)
 const mapStroke = {
   todo:     "#a8a8a2",
-  wip:      "#d4940a",
-  script:   "#c8408a",
-  launched: "#98b800",
-  done:     "#38a060"
+  wip:      "#c0c0b8",
+  script:   "#c4a000",
+  launched: "#c03030",
+  done:     "#003cc0"
 };
 
 const mapFill = {
   todo:     "#ddddd8",
-  wip:      "#f5c96a",
-  script:   "#f59dc8",
-  launched: "#e0f580",
-  done:     "#72cc92"
+  wip:      "#f5f5f0",
+  script:   "#f5e06a",
+  launched: "#f59a9a",
+  done:     "#7090d8"
 };
 const mapHover = {
   todo:     "#c8c8c2",
-  wip:      "#e8b84e",
-  script:   "#e87ab0",
-  launched: "#d0e868",
-  done:     "#55bb78"
+  wip:      "#e8e8e2",
+  script:   "#e8d048",
+  launched: "#e87a7a",
+  done:     "#5878c0"
 };
 // Couleurs pour le mode sombre cinématique
 const mapFillDark = {
   todo:     "#2e3f58",
-  wip:      "#c47a10",
-  script:   "#b04080",
-  launched: "#7a9900",
-  done:     "#2a7a50"
+  wip:      "#c8c8c0",
+  script:   "#a88a10",
+  launched: "#a03030",
+  done:     "#1a3fa0"
 };
 const mapHoverDark = {
   todo:     "#3a4e6e",
-  wip:      "#d98e18",
-  script:   "#c84e92",
-  launched: "#90b800",
-  done:     "#349260"
+  wip:      "#d8d8d0",
+  script:   "#c0a018",
+  launched: "#b84040",
+  done:     "#2850b8"
 };
 const mapStrokeDark = {
   todo:     "#4a6080",
-  wip:      "#f0a030",
-  script:   "#e060a0",
-  launched: "#b0e000",
-  done:     "#40b068"
+  wip:      "#e8e8e0",
+  script:   "#e0c020",
+  launched: "#e05050",
+  done:     "#3060d0"
 };
 
 // Continents pour le drawer
@@ -244,7 +244,7 @@ function applyTheme(dark) {
   if (document.getElementById("countries-group").children.length > 0) {
     applyColors();
     if (d3lib) {
-      d3lib.selectAll(".pulse-ring").attr("stroke", dark ? "#4ADE80" : "#38a060");
+      d3lib.selectAll(".pulse-ring").attr("stroke", dark ? "#3060d0" : "#002FA7");
       d3lib.selectAll(".country-label")
         .attr("fill",   dark ? "rgba(255,255,255,0.8)"  : "rgba(20,20,20,0.75)")
         .attr("stroke", dark ? "rgba(6,8,17,0.85)"      : "rgba(255,255,255,0.92)");
@@ -865,19 +865,19 @@ function autoSave() {
 // ── Pays flottant 3D ──────────────────────────────────────────────────────────
 const glowRGB = {
   todo:     { dark: "70,110,220",  light: "61,74,107"   },
-  wip:      { dark: "240,160,40",  light: "196,122,16"  },
-  script:   { dark: "230,70,160",  light: "176,64,128"  },
-  launched: { dark: "180,220,0",   light: "120,150,0"   },
-  done:     { dark: "60,200,120",  light: "42,122,80"   },
+  wip:      { dark: "210,210,200", light: "168,168,160" },
+  script:   { dark: "224,192,32",  light: "154,122,14"  },
+  launched: { dark: "224,80,80",   light: "144,48,48"   },
+  done:     { dark: "48,96,208",   light: "26,42,128"   },
 };
 
 // Couleurs de fill dédiées au float — toujours visibles quel que soit le thème
 const floatFill = {
   todo:     { dark: "#7090c8", light: "#3d4a6b" },
-  wip:      { dark: "#f0a020", light: "#b06e0e" },
-  script:   { dark: "#e858b0", light: "#a03878" },
-  launched: { dark: "#b0e000", light: "#6a8500" },
-  done:     { dark: "#48c878", light: "#256e48" },
+  wip:      { dark: "#d0d0c8", light: "#a8a8a0" },
+  script:   { dark: "#e0c020", light: "#9a7a0e" },
+  launched: { dark: "#e05050", light: "#903030" },
+  done:     { dark: "#3060d0", light: "#1a2a80" },
 };
 
 // Polygone dominant par surface géographique réelle (d3.geoArea, pas besoin de projection)
@@ -1213,7 +1213,7 @@ function animateCounter(el, to, suffix) {
 function renderPulseRings() {
   if (!ringsCopies.length || !geoFeatures.length || !projFn || !d3lib) return;
   const dark  = document.body.classList.contains("dark");
-  const color = dark ? "#4ADE80" : "#38a060";
+  const color = dark ? "#3060d0" : "#002FA7";
   const doneIds = Object.keys(allData).filter(id => allData[id]?.status === "done");
 
   ringsCopies.forEach(ringsG => {
