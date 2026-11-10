@@ -59,6 +59,7 @@
         <span id="progress-label" class="progress-label">0 / 241</span>
         <div class="stat-pill"><span class="dot dot-wip"></span><span id="cnt-wip">0</span></div>
         <div class="stat-pill"><span class="dot dot-script"></span><span id="cnt-script">0</span></div>
+        <div class="stat-pill"><span class="dot dot-launched"></span><span id="cnt-launched">0</span></div>
         <div class="stat-pill"><span class="dot dot-done"></span><span id="cnt-done">0</span></div>
         <button class="theme-btn" id="theme-btn" title="Mode nuit/jour">
           <svg id="icon-sun" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><circle cx="12" cy="12" r="5"/><line x1="12" y1="1" x2="12" y2="3"/><line x1="12" y1="21" x2="12" y2="23"/><line x1="4.22" y1="4.22" x2="5.64" y2="5.64"/><line x1="18.36" y1="18.36" x2="19.78" y2="19.78"/><line x1="1" y1="12" x2="3" y2="12"/><line x1="21" y1="12" x2="23" y2="12"/><line x1="4.22" y1="19.78" x2="5.64" y2="18.36"/><line x1="18.36" y1="5.64" x2="19.78" y2="4.22"/></svg>
@@ -101,6 +102,7 @@
           <span id="mobile-progress-label" class="progress-label">0 / 241</span>
           <div class="stat-pill"><span class="dot dot-wip"></span><span id="mobile-cnt-wip">0</span></div>
           <div class="stat-pill"><span class="dot dot-script"></span><span id="mobile-cnt-script">0</span></div>
+          <div class="stat-pill"><span class="dot dot-launched"></span><span id="mobile-cnt-launched">0</span></div>
           <div class="stat-pill"><span class="dot dot-done"></span><span id="mobile-cnt-done">0</span></div>
         </div>
         <div class="mobile-drawer-section mobile-legend">
@@ -109,6 +111,7 @@
             <button class="fbtn active" data-mf="todo"><span class="dot dot-todo"></span><span>À explorer</span></button>
             <button class="fbtn active" data-mf="wip"><span class="dot dot-wip"></span><span>Piste en cours</span></button>
             <button class="fbtn active" data-mf="script"><span class="dot dot-script"></span><span>Artiste choisi</span></button>
+            <button class="fbtn active" data-mf="launched"><span class="dot dot-launched"></span><span>Script lancé</span></button>
             <button class="fbtn active" data-mf="done"><span class="dot dot-done"></span><span>Prêt à tourner</span></button>
           </div>
         </div>
@@ -152,12 +155,14 @@
         <span class="leg"><span class="dot dot-todo"></span>À explorer</span>
         <span class="leg"><span class="dot dot-wip"></span>Piste en cours</span>
         <span class="leg"><span class="dot dot-script"></span>Artiste choisi</span>
+        <span class="leg"><span class="dot dot-launched"></span>Script lancé</span>
         <span class="leg"><span class="dot dot-done"></span>Prêt à tourner</span>
         <span class="leg-sep"></span>
         <span class="leg-filter-label">Filtres :</span>
         <button class="fbtn active" data-f="todo"><span class="dot dot-todo"></span></button>
         <button class="fbtn active" data-f="wip"><span class="dot dot-wip"></span></button>
         <button class="fbtn active" data-f="script"><span class="dot dot-script"></span></button>
+        <button class="fbtn active" data-f="launched"><span class="dot dot-launched"></span></button>
         <button class="fbtn active" data-f="done"><span class="dot dot-done"></span></button>
         <span class="leg-sep"></span>
         <span class="leg-hint">Scroll · Glisser · Cliquer</span>
@@ -195,10 +200,12 @@
           <div class="status-row">
             <button class="sbtn s-wip" data-s="wip">Piste en cours</button>
             <button class="sbtn s-script" data-s="script">Artiste choisi</button>
+            <button class="sbtn s-launched" data-s="launched">Script lancé</button>
             <button class="sbtn s-done" data-s="done">Prêt à tourner</button>
             <button class="sbtn s-clear" id="status-clear">Effacer</button>
           </div>
         </div>
+        <div id="fiche-tabs" class="fiche-tabs single"></div>
         <div class="field-group">
           <label class="lbl">Artiste</label>
           <input id="panel-artist" class="finput" placeholder="Nom de l'artiste, groupe…" />
@@ -285,6 +292,7 @@
     <div id="ctx-menu" class="hidden">
       <div class="ctx-item" data-s="wip"><span class="dot dot-wip"></span>Piste en cours</div>
       <div class="ctx-item" data-s="script"><span class="dot dot-script"></span>Artiste choisi</div>
+      <div class="ctx-item" data-s="launched"><span class="dot dot-launched"></span>Script lancé</div>
       <div class="ctx-item" data-s="done"><span class="dot dot-done"></span>Prêt à tourner</div>
       <div class="ctx-item ctx-clear" id="ctx-clear">Effacer le statut</div>
       <div class="ctx-sep"></div>

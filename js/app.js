@@ -22,6 +22,8 @@ let selectedName = null;
 let currentStatus = "todo";
 let currentLinks = [];
 let currentArtistPhoto = "";
+let currentFiches = [];
+let currentFicheIdx = 0;
 
 // Références carte (initialisées dans loadMap)
 let d3lib = null;
@@ -35,60 +37,68 @@ let currentZoomK  = 1;    // niveau de zoom actuel
 let filterStagger = false; // stagger lors du toggle filtre
 
 // Filtres actifs par statut
-const activeFilters = new Set(["todo", "wip", "script", "done"]);
+const activeFilters = new Set(["todo", "wip", "script", "launched", "done"]);
 
 const statusLabel = {
-  todo:   "À explorer",
-  wip:    "Piste en cours",
-  script: "Artiste choisi",
-  done:   "Prêt à tourner"
+  todo:     "À explorer",
+  wip:      "Piste en cours",
+  script:   "Artiste choisi",
+  launched: "Script lancé",
+  done:     "Prêt à tourner"
 };
 
 const statusColor = {
-  todo:   "#4a4a44",
-  wip:    "#F5A623",
-  script: "#f564a9",
-  done:   "#4ADE80"
+  todo:     "#4a4a44",
+  wip:      "#F5A623",
+  script:   "#f564a9",
+  launched: "#D4FF00",
+  done:     "#4ADE80"
 };
 
 // Couleur du trait au survol (version sombre du fill selon statut)
 const mapStroke = {
-  todo:   "#a8a8a2",
-  wip:    "#d4940a",
-  script: "#c8408a",
-  done:   "#38a060"
+  todo:     "#a8a8a2",
+  wip:      "#d4940a",
+  script:   "#c8408a",
+  launched: "#98b800",
+  done:     "#38a060"
 };
 
 const mapFill = {
-  todo:   "#ddddd8",
-  wip:    "#f5c96a",
-  script: "#f59dc8",
-  done:   "#72cc92"
+  todo:     "#ddddd8",
+  wip:      "#f5c96a",
+  script:   "#f59dc8",
+  launched: "#e0f580",
+  done:     "#72cc92"
 };
 const mapHover = {
-  todo:   "#c8c8c2",
-  wip:    "#e8b84e",
-  script: "#e87ab0",
-  done:   "#55bb78"
+  todo:     "#c8c8c2",
+  wip:      "#e8b84e",
+  script:   "#e87ab0",
+  launched: "#d0e868",
+  done:     "#55bb78"
 };
 // Couleurs pour le mode sombre cinématique
 const mapFillDark = {
-  todo:   "#2e3f58",
-  wip:    "#c47a10",
-  script: "#b04080",
-  done:   "#2a7a50"
+  todo:     "#2e3f58",
+  wip:      "#c47a10",
+  script:   "#b04080",
+  launched: "#7a9900",
+  done:     "#2a7a50"
 };
 const mapHoverDark = {
-  todo:   "#3a4e6e",
-  wip:    "#d98e18",
-  script: "#c84e92",
-  done:   "#349260"
+  todo:     "#3a4e6e",
+  wip:      "#d98e18",
+  script:   "#c84e92",
+  launched: "#90b800",
+  done:     "#349260"
 };
 const mapStrokeDark = {
-  todo:   "#4a6080",
-  wip:    "#f0a030",
-  script: "#e060a0",
-  done:   "#40b068"
+  todo:     "#4a6080",
+  wip:      "#f0a030",
+  script:   "#e060a0",
+  launched: "#b0e000",
+  done:     "#40b068"
 };
 
 // Continents pour le drawer
@@ -543,15 +553,17 @@ function updateStats() {
   const TOTAL = 241;
   const v = Object.values(allData);
   const counts = {
-    wip:    v.filter(x => x.status === "wip").length,
-    script: v.filter(x => x.status === "script").length,
-    done:   v.filter(x => x.status === "done").length,
+    wip:      v.filter(x => x.status === "wip").length,
+    script:   v.filter(x => x.status === "script").length,
+    launched: v.filter(x => x.status === "launched").length,
+    done:     v.filter(x => x.status === "done").length,
   };
-  const annotated = counts.wip + counts.script + counts.done;
+  const annotated = counts.wip + counts.script + counts.launched + counts.done;
 
-  animateCounter(document.getElementById("cnt-wip"),    counts.wip);
-  animateCounter(document.getElementById("cnt-script"), counts.script);
-  animateCounter(document.getElementById("cnt-done"),   counts.done);
+  animateCounter(document.getElementById("cnt-wip"),      counts.wip);
+  animateCounter(document.getElementById("cnt-script"),   counts.script);
+  animateCounter(document.getElementById("cnt-launched"), counts.launched);
+  animateCounter(document.getElementById("cnt-done"),     counts.done);
 
   const lbl = document.getElementById("progress-label");
   if (lbl) lbl.textContent = `${annotated} / ${TOTAL}`;
@@ -559,7 +571,7 @@ function updateStats() {
   const bar = document.getElementById("progress-bar");
   if (bar) {
     bar.innerHTML = [
-      ["wip", counts.wip], ["script", counts.script], ["done", counts.done]
+      ["wip", counts.wip], ["script", counts.script], ["launched", counts.launched], ["done", counts.done]
     ].map(([s, n]) => n > 0
       ? `<span class="pb-${s}" style="width:${n / TOTAL * 100}%"></span>` : ""
     ).join("");
@@ -678,18 +690,120 @@ function updatePanelStatusDot(status) {
   document.getElementById("panel-status-label").textContent = statusLabel[status] || "À explorer";
 }
 
+function getFiches(entry) {
+  if (entry.fiches && Array.isArray(entry.fiches) && entry.fiches.length > 0) {
+    return entry.fiches.map(f => ({
+      artist: f.artist || "", category: f.category || "",
+      note: f.note || "", links: f.links || [], artistPhoto: f.artistPhoto || ""
+    }));
+  }
+  return [{
+    artist: entry.artist || "", category: entry.category || "",
+    note: entry.note || "", links: entry.links || [], artistPhoto: entry.artistPhoto || ""
+  }];
+}
+
+function loadFiche(idx) {
+  const f = currentFiches[idx] || currentFiches[0];
+  document.getElementById("panel-artist").value   = f.artist   || "";
+  document.getElementById("panel-category").value = f.category || "";
+  document.getElementById("panel-note").value     = f.note     || "";
+  currentLinks       = f.links ? [...f.links] : [];
+  currentArtistPhoto = f.artistPhoto || "";
+  closePhotoPopover();
+  renderArtistPhoto();
+  renderLinks();
+}
+
+function saveFicheToArray() {
+  if (!currentFiches[currentFicheIdx]) return;
+  currentFiches[currentFicheIdx] = {
+    artist:      document.getElementById("panel-artist").value.trim(),
+    category:    document.getElementById("panel-category").value.trim(),
+    note:        document.getElementById("panel-note").value.trim(),
+    links:       [...currentLinks],
+    artistPhoto: currentArtistPhoto || ""
+  };
+}
+
+function renderFicheTabs() {
+  const container = document.getElementById("fiche-tabs");
+  if (!container) return;
+  const count = currentFiches.length;
+  if (count <= 1) {
+    container.classList.add("single");
+  } else {
+    container.classList.remove("single");
+  }
+  let html = "";
+  for (let i = 0; i < count; i++) {
+    const active = i === currentFicheIdx ? " active" : "";
+    html += `<button class="fiche-tab${active}" data-fiche="${i}">Fiche ${i + 1}`;
+    if (i > 0) html += `<span class="fiche-del" data-del="${i}">×</span>`;
+    html += `</button>`;
+  }
+  if (count < 3) {
+    if (count === 1) {
+      html += `<button id="fiche-add" class="fiche-add-btn fiche-add-label" title="Ajouter une proposition alternative">+ Ajouter une fiche</button>`;
+    } else {
+      html += `<button id="fiche-add" class="fiche-add-btn" title="Ajouter une fiche">+</button>`;
+    }
+  }
+  container.innerHTML = html;
+
+  container.querySelectorAll(".fiche-tab").forEach(btn => {
+    btn.addEventListener("click", e => {
+      if (e.target.classList.contains("fiche-del")) return;
+      const idx = parseInt(btn.dataset.fiche);
+      switchFiche(idx);
+    });
+  });
+  container.querySelectorAll(".fiche-del").forEach(btn => {
+    btn.addEventListener("click", e => {
+      e.stopPropagation();
+      const idx = parseInt(btn.dataset.del);
+      deleteFiche(idx);
+    });
+  });
+  const addBtn = document.getElementById("fiche-add");
+  if (addBtn) addBtn.addEventListener("click", addFiche);
+}
+
+function switchFiche(idx) {
+  saveFicheToArray();
+  currentFicheIdx = idx;
+  loadFiche(idx);
+  renderFicheTabs();
+}
+
+function addFiche() {
+  if (currentFiches.length >= 3) return;
+  saveFicheToArray();
+  currentFiches.push({ artist: "", category: "", note: "", links: [], artistPhoto: "" });
+  currentFicheIdx = currentFiches.length - 1;
+  loadFiche(currentFicheIdx);
+  renderFicheTabs();
+}
+
+function deleteFiche(idx) {
+  if (idx === 0 || currentFiches.length <= 1) return;
+  saveFicheToArray();
+  currentFiches.splice(idx, 1);
+  if (currentFicheIdx >= currentFiches.length) currentFicheIdx = currentFiches.length - 1;
+  if (currentFicheIdx === idx) loadFiche(currentFicheIdx);
+  else if (currentFicheIdx > idx) currentFicheIdx--;
+  renderFicheTabs();
+}
+
 function openPanel(id, name) {
   selectedId = id; selectedName = name;
   const entry = allData[id] || {};
-  document.getElementById("panel-name").textContent       = name;
-  document.getElementById("panel-artist").value           = entry.artist   || "";
-  document.getElementById("panel-category").value         = entry.category || "";
-  document.getElementById("panel-note").value             = entry.note     || "";
-  currentStatus      = entry.status && entry.status !== "todo" ? entry.status : null;
-  currentLinks       = entry.links  || [];
-  currentArtistPhoto = entry.artistPhoto || "";
-  closePhotoPopover();
-  renderArtistPhoto();
+  document.getElementById("panel-name").textContent = name;
+  currentStatus = entry.status && entry.status !== "todo" ? entry.status : null;
+  currentFiches = getFiches(entry);
+  currentFicheIdx = 0;
+  loadFiche(0);
+  renderFicheTabs();
 
   document.querySelectorAll(".sbtn").forEach(b =>
     b.classList.toggle("active", b.dataset.s === currentStatus));
@@ -720,12 +834,10 @@ function openPanel(id, name) {
 
 function autoSave() {
   if (!selectedId) return;
-  const artist   = document.getElementById("panel-artist").value.trim();
-  const category = document.getElementById("panel-category").value.trim();
-  const note     = document.getElementById("panel-note").value.trim();
-  const hasContent = currentStatus || artist || category || note || currentLinks.length;
+  saveFicheToArray();
+  const hasContent = currentStatus || currentFiches.some(f =>
+    f.artist || f.category || f.note || (f.links && f.links.length) || f.artistPhoto);
   if (!hasContent) {
-    // Rien à sauvegarder — effacer l'entrée si elle existait
     if (allData[selectedId]) {
       delete allData[selectedId];
       set(ref(db, "countries/" + selectedId), null);
@@ -733,11 +845,15 @@ function autoSave() {
     }
     return;
   }
+  const f0 = currentFiches[0] || {};
   const entry = {
     status:      currentStatus || null,
-    artist, category, note,
-    links:       currentLinks,
-    artistPhoto: currentArtistPhoto || null,
+    artist:      f0.artist || "",
+    category:    f0.category || "",
+    note:        f0.note || "",
+    links:       f0.links || [],
+    artistPhoto: f0.artistPhoto || null,
+    fiches:      currentFiches.length > 1 ? currentFiches : null,
     editedAt:    Date.now(),
     name:        selectedName
   };
@@ -748,18 +864,20 @@ function autoSave() {
 
 // ── Pays flottant 3D ──────────────────────────────────────────────────────────
 const glowRGB = {
-  todo:   { dark: "70,110,220",  light: "61,74,107"   },
-  wip:    { dark: "240,160,40",  light: "196,122,16"  },
-  script: { dark: "230,70,160",  light: "176,64,128"  },
-  done:   { dark: "60,200,120",  light: "42,122,80"   },
+  todo:     { dark: "70,110,220",  light: "61,74,107"   },
+  wip:      { dark: "240,160,40",  light: "196,122,16"  },
+  script:   { dark: "230,70,160",  light: "176,64,128"  },
+  launched: { dark: "180,220,0",   light: "120,150,0"   },
+  done:     { dark: "60,200,120",  light: "42,122,80"   },
 };
 
 // Couleurs de fill dédiées au float — toujours visibles quel que soit le thème
 const floatFill = {
-  todo:   { dark: "#7090c8", light: "#3d4a6b" },
-  wip:    { dark: "#f0a020", light: "#b06e0e" },
-  script: { dark: "#e858b0", light: "#a03878" },
-  done:   { dark: "#48c878", light: "#256e48" },
+  todo:     { dark: "#7090c8", light: "#3d4a6b" },
+  wip:      { dark: "#f0a020", light: "#b06e0e" },
+  script:   { dark: "#e858b0", light: "#a03878" },
+  launched: { dark: "#b0e000", light: "#6a8500" },
+  done:     { dark: "#48c878", light: "#256e48" },
 };
 
 // Polygone dominant par surface géographique réelle (d3.geoArea, pas besoin de projection)
@@ -1029,7 +1147,7 @@ document.getElementById("drawer-close").addEventListener("click", closeDrawer);
 drawerOverlay.addEventListener("click", closeDrawer);
 
 const CONTINENT_ORDER = ["Afrique", "Amér. Nord", "Amér. Sud", "Asie", "Europe", "Océanie", "Autres"];
-const STATUS_ORDER = { done: 0, script: 1, wip: 2, todo: 3 };
+const STATUS_ORDER = { done: 0, launched: 1, script: 2, wip: 3, todo: 4 };
 
 function renderDrawer() {
   const body = document.getElementById("drawer-body");
@@ -1249,8 +1367,8 @@ document.getElementById("sort-save").addEventListener("click", () => {
     return Object.entries(allData)
       .filter(([, v]) => v?.name && v?.status && v.status !== "todo")
       .sort((a, b) => {
-        const order = { done: 0, script: 1, wip: 2 };
-        return (order[a[1].status] ?? 3) - (order[b[1].status] ?? 3);
+        const order = { done: 0, launched: 1, script: 2, wip: 3 };
+        return (order[a[1].status] ?? 4) - (order[b[1].status] ?? 4);
       });
   }
 
@@ -1410,14 +1528,14 @@ document.getElementById("sort-save").addEventListener("click", () => {
     const mlbl = document.getElementById("mobile-progress-label");
     const dlbl = document.getElementById("progress-label");
     if (mlbl && dlbl) mlbl.textContent = dlbl.textContent;
-    ["wip", "script", "done"].forEach(s => {
+    ["wip", "script", "launched", "done"].forEach(s => {
       const src = document.getElementById("cnt-" + s);
       const dst = document.getElementById("mobile-cnt-" + s);
       if (src && dst) dst.textContent = src.textContent;
     });
   }
   // Observe desktop counters for text changes
-  ["cnt-wip", "cnt-script", "cnt-done", "progress-label"].forEach(id => {
+  ["cnt-wip", "cnt-script", "cnt-launched", "cnt-done", "progress-label"].forEach(id => {
     const el = document.getElementById(id);
     if (el) new MutationObserver(syncMobileStats).observe(el, { childList: true, characterData: true, subtree: true });
   });
