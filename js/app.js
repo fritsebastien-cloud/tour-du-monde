@@ -48,57 +48,57 @@ const statusLabel = {
 };
 
 const statusColor = {
-  todo:     "#4a4a44",
-  wip:      "#B8873A",
-  script:   "#A9A83F",
-  launched: "#6FBF5A",
-  done:     "#3FE07F"
+  todo:     "#1C2840",
+  wip:      "#FF6B6B",
+  script:   "#FFD166",
+  launched: "#4CC9F0",
+  done:     "#3DDC5A"
 };
 
 // Couleur du trait au survol (version sombre du fill selon statut)
 const mapStroke = {
-  todo:     "#a8a8a2",
-  wip:      "#96692a",
-  script:   "#888728",
-  launched: "#4a9038",
-  done:     "#28a858"
+  todo:     "#2a3a58",
+  wip:      "#d04848",
+  script:   "#c8a030",
+  launched: "#2898c0",
+  done:     "#28a848"
 };
 
 const mapFill = {
-  todo:     "#ddddd8",
-  wip:      "#d4b478",
-  script:   "#d0cf7a",
-  launched: "#a0d890",
-  done:     "#80e8a0"
+  todo:     "#c8ccd8",
+  wip:      "#ff9a9a",
+  script:   "#ffe4a0",
+  launched: "#90ddf5",
+  done:     "#7ae890"
 };
 const mapHover = {
-  todo:     "#c8c8c2",
-  wip:      "#c8a460",
-  script:   "#c0be60",
-  launched: "#88c878",
-  done:     "#60d888"
+  todo:     "#b0b8c8",
+  wip:      "#ff8080",
+  script:   "#ffd878",
+  launched: "#70d0f0",
+  done:     "#58d878"
 };
 // Couleurs pour le mode sombre cinématique
 const mapFillDark = {
-  todo:     "#2e3f58",
-  wip:      "#8a6528",
-  script:   "#787720",
-  launched: "#408830",
-  done:     "#28a058"
+  todo:     "#1C2840",
+  wip:      "#c04848",
+  script:   "#b89030",
+  launched: "#2890b8",
+  done:     "#28a050"
 };
 const mapHoverDark = {
-  todo:     "#3a4e6e",
-  wip:      "#a07830",
-  script:   "#909028",
-  launched: "#50a038",
-  done:     "#38b868"
+  todo:     "#283858",
+  wip:      "#d85858",
+  script:   "#c8a038",
+  launched: "#38a0c8",
+  done:     "#38b860"
 };
 const mapStrokeDark = {
-  todo:     "#4a6080",
-  wip:      "#d0a040",
-  script:   "#c0bf40",
-  launched: "#70c050",
-  done:     "#50e080"
+  todo:     "#3a5070",
+  wip:      "#ff6b6b",
+  script:   "#ffd166",
+  launched: "#4cc9f0",
+  done:     "#3ddc5a"
 };
 
 // Continents pour le drawer
@@ -244,7 +244,7 @@ function applyTheme(dark) {
   if (document.getElementById("countries-group").children.length > 0) {
     applyColors();
     if (d3lib) {
-      d3lib.selectAll(".pulse-ring").attr("stroke", dark ? "#3FE07F" : "#28a858");
+      d3lib.selectAll(".pulse-ring").attr("stroke", dark ? "#3DDC5A" : "#28a848");
       d3lib.selectAll(".country-label")
         .attr("fill",   dark ? "rgba(255,255,255,0.8)"  : "rgba(20,20,20,0.75)")
         .attr("stroke", dark ? "rgba(6,8,17,0.85)"      : "rgba(255,255,255,0.92)");
@@ -864,20 +864,20 @@ function autoSave() {
 
 // ── Pays flottant 3D ──────────────────────────────────────────────────────────
 const glowRGB = {
-  todo:     { dark: "70,110,220",  light: "61,74,107"   },
-  wip:      { dark: "200,150,50",  light: "140,100,40"  },
-  script:   { dark: "180,180,50",  light: "120,120,30"  },
-  launched: { dark: "100,190,80",  light: "60,120,40"   },
-  done:     { dark: "60,220,120",  light: "32,136,72"   },
+  todo:     { dark: "28,40,64",    light: "28,40,64"    },
+  wip:      { dark: "255,107,107", light: "208,72,72"   },
+  script:   { dark: "255,209,102", light: "200,160,48"  },
+  launched: { dark: "76,201,240",  light: "40,144,192"  },
+  done:     { dark: "61,220,90",   light: "40,168,72"   },
 };
 
 // Couleurs de fill dédiées au float — toujours visibles quel que soit le thème
 const floatFill = {
-  todo:     { dark: "#7090c8", light: "#3d4a6b" },
-  wip:      { dark: "#d0a040", light: "#7a5820" },
-  script:   { dark: "#c0bf40", light: "#6a6920" },
-  launched: { dark: "#70c050", light: "#387828" },
-  done:     { dark: "#50e080", light: "#208848" },
+  todo:     { dark: "#4a6090", light: "#1C2840" },
+  wip:      { dark: "#ff6b6b", light: "#c04848" },
+  script:   { dark: "#ffd166", light: "#b89030" },
+  launched: { dark: "#4cc9f0", light: "#2890b8" },
+  done:     { dark: "#3ddc5a", light: "#28a050" },
 };
 
 // Polygone dominant par surface géographique réelle (d3.geoArea, pas besoin de projection)
@@ -1213,7 +1213,7 @@ function animateCounter(el, to, suffix) {
 function renderPulseRings() {
   if (!ringsCopies.length || !geoFeatures.length || !projFn || !d3lib) return;
   const dark  = document.body.classList.contains("dark");
-  const color = dark ? "#3FE07F" : "#28a858";
+  const color = dark ? "#3DDC5A" : "#28a848";
   const doneIds = Object.keys(allData).filter(id => allData[id]?.status === "done");
 
   ringsCopies.forEach(ringsG => {

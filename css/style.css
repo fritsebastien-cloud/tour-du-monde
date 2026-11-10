@@ -105,11 +105,12 @@ body.dark .stat-pill {
   color: rgba(255,255,255,0.35);
 }
 .dot { width: 6px; height: 6px; border-radius: 50%; flex-shrink: 0; }
-.dot-todo   { background: #c8c8c2; }
-.dot-wip    { background: #B8873A; }
-.dot-script { background: #A9A83F; }
-.dot-launched { background: #6FBF5A; }
-.dot-done   { background: #3FE07F; }
+.dot-todo   { background: #1C2840; border: 1px solid rgba(255,255,255,0.12); }
+body:not(.dark) .dot-todo { background: #c8ccd8; border: none; }
+.dot-wip    { background: #FF6B6B; }
+.dot-script { background: #FFD166; }
+.dot-launched { background: #4CC9F0; }
+.dot-done   { background: #3DDC5A; }
 
 .theme-btn, .logout-btn {
   padding: 5px 10px; border-radius: 8px;
@@ -143,10 +144,10 @@ body.dark .progress-label {
 body.dark #progress-bar-wrap { background: rgba(255,255,255,0.04); }
 #progress-bar { display: flex; height: 100%; }
 .pb-todo   { background: #c8c8c2; transition: width 0.5s ease; }
-.pb-wip    { background: #B8873A; transition: width 0.5s ease; }
-.pb-script { background: #A9A83F; transition: width 0.5s ease; }
-.pb-launched { background: #6FBF5A; transition: width 0.5s ease; }
-.pb-done   { background: #3FE07F; transition: width 0.5s ease; }
+.pb-wip    { background: #FF6B6B; transition: width 0.5s ease; }
+.pb-script { background: #FFD166; transition: width 0.5s ease; }
+.pb-launched { background: #4CC9F0; transition: width 0.5s ease; }
+.pb-done   { background: #3DDC5A; transition: width 0.5s ease; }
 
 /* ── SEARCH ────────────────────────────────────────────────────────────────── */
 .search-wrap {
@@ -542,14 +543,14 @@ body.dark .sbtn {
 }
 .sbtn:hover { color: #666; background: #ebebea; }
 body.dark .sbtn:hover { color: rgba(255,255,255,0.7); background: rgba(255,255,255,0.08); }
-.sbtn.active.s-wip    { border-color: #B8873A; background: rgba(184,135,58,0.1);  color: #96692a; }
-.sbtn.active.s-script   { border-color: #A9A83F; background: rgba(169,168,63,0.1);  color: #888728; }
-.sbtn.active.s-launched { border-color: #6FBF5A; background: rgba(111,191,90,0.1);  color: #4a9038; }
-.sbtn.active.s-done     { border-color: #3FE07F; background: rgba(63,224,127,0.1);  color: #28a858; }
-body.dark .sbtn.active.s-wip      { background: rgba(184,135,58,0.15);  color: #d4b478; }
-body.dark .sbtn.active.s-script   { background: rgba(169,168,63,0.15);  color: #d0cf7a; }
-body.dark .sbtn.active.s-launched { background: rgba(111,191,90,0.15);  color: #a0d890; }
-body.dark .sbtn.active.s-done     { background: rgba(63,224,127,0.15);  color: #80e8a0; }
+.sbtn.active.s-wip    { border-color: #FF6B6B; background: rgba(255,107,107,0.1);  color: #d04848; }
+.sbtn.active.s-script   { border-color: #FFD166; background: rgba(255,209,102,0.1);  color: #b89030; }
+.sbtn.active.s-launched { border-color: #4CC9F0; background: rgba(76,201,240,0.1);   color: #2890b8; }
+.sbtn.active.s-done     { border-color: #3DDC5A; background: rgba(61,220,90,0.1);    color: #28a050; }
+body.dark .sbtn.active.s-wip      { background: rgba(255,107,107,0.15); color: #ff9a9a; }
+body.dark .sbtn.active.s-script   { background: rgba(255,209,102,0.15); color: #ffe4a0; }
+body.dark .sbtn.active.s-launched { background: rgba(76,201,240,0.15);  color: #90ddf5; }
+body.dark .sbtn.active.s-done     { background: rgba(61,220,90,0.15);   color: #7ae890; }
 .sbtn.s-clear { color: #ccc; font-size: 11px; }
 body.dark .sbtn.s-clear { color: rgba(255,255,255,0.18); }
 .sbtn.s-clear:hover { color: #e05252; border-color: rgba(224,82,82,0.3); background: rgba(224,82,82,0.06); }
@@ -1032,7 +1033,7 @@ body.dark .ctx-sep { background: rgba(255,255,255,0.07); }
 .progress-ring-bg { stroke: rgba(0,0,0,0.08); }
 body.dark .progress-ring-bg { stroke: rgba(255,255,255,0.08); }
 .progress-ring-fg {
-  stroke: #3FE07F;
+  stroke: #3DDC5A;
   transition: stroke-dashoffset 0.8s cubic-bezier(0.4, 0, 0.2, 1);
 }
 .progress-pct {
@@ -1146,7 +1147,7 @@ body.dark #present-nav button:hover {
   transition: all 0.2s;
 }
 body.dark .present-dot { background: rgba(255,255,255,0.12); }
-.present-dot.active { background: #3FE07F; transform: scale(1.3); }
+.present-dot.active { background: #3DDC5A; transform: scale(1.3); }
 
 #present-progress {
   position: absolute; bottom: 0; left: 0; right: 0;
@@ -1154,7 +1155,7 @@ body.dark .present-dot { background: rgba(255,255,255,0.12); }
 }
 body.dark #present-progress { background: rgba(255,255,255,0.04); }
 #present-progress-fill {
-  height: 100%; background: #3FE07F;
+  height: 100%; background: #3DDC5A;
   transition: width 0.4s ease;
 }
 
