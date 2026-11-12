@@ -1,4 +1,4 @@
-const MODELS = ["gemini-3.8-flash", "gemini-3.1-flash-lite"];
+const MODELS = ["gemini-3.1-flash-lite"];
 
 async function tryModel(model, apiKey, prompt) {
   const url = `https://generativelanguage.googleapis.com/v1beta/models/${model}:generateContent?key=${apiKey}`;
