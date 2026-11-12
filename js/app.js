@@ -408,20 +408,11 @@ async function loadMap() {
           const dark = document.body.classList.contains("dark");
           const hovers  = dark ? mapHoverDark  : mapHover;
           const strokes = dark ? mapStrokeDark : mapStroke;
-          if (s) {
-            d3mod.selectAll(`[data-id="${id}"]`)
-              .attr("fill", hovers[s])
-              .attr("stroke", strokes[s])
-              .attr("stroke-width", 1.2)
-              .classed("hovered", true);
-          } else {
-            const cc = countryColor(id);
-            d3mod.selectAll(`[data-id="${id}"]`)
-              .attr("fill", dark ? cc.darkHover : cc.lightHover)
-              .attr("stroke", dark ? "#1a2848" : "#2a3860")
-              .attr("stroke-width", 1.2)
-              .classed("hovered", true);
-          }
+          d3mod.selectAll(`[data-id="${id}"]`)
+            .attr("fill", hovers[s] || hovers.todo)
+            .attr("stroke", strokes[s] || strokes.todo)
+            .attr("stroke-width", 1.2)
+            .classed("hovered", true);
         })
         .on("mousemove", moveTooltip)
         .on("mouseleave", () => {
@@ -451,20 +442,11 @@ async function loadMap() {
           const dark = document.body.classList.contains("dark");
           const hovers  = dark ? mapHoverDark  : mapHover;
           const strokes = dark ? mapStrokeDark : mapStroke;
-          if (s) {
-            d3mod.selectAll(`[data-id="${id}"]`)
-              .attr("fill", hovers[s])
-              .attr("stroke", strokes[s])
-              .attr("stroke-width", 1.2)
-              .classed("hovered", true);
-          } else {
-            const cc = countryColor(id);
-            d3mod.selectAll(`[data-id="${id}"]`)
-              .attr("fill", dark ? cc.darkHover : cc.lightHover)
-              .attr("stroke", dark ? "#1a2848" : "#2a3860")
-              .attr("stroke-width", 1.2)
-              .classed("hovered", true);
-          }
+          d3mod.selectAll(`[data-id="${id}"]`)
+            .attr("fill", hovers[s] || hovers.todo)
+            .attr("stroke", strokes[s] || strokes.todo)
+            .attr("stroke-width", 1.2)
+            .classed("hovered", true);
         })
         .on("mousemove", moveTooltip)
         .on("mouseleave", () => {
@@ -570,12 +552,7 @@ function applyColorToEl(el, id) {
   const filtered = !activeFilters.has(effectiveStatus);
   const dark = document.body.classList.contains("dark");
   const fills = dark ? mapFillDark : mapFill;
-  if (s) {
-    el.setAttribute("fill", fills[s]);
-  } else {
-    const cc = countryColor(id);
-    el.setAttribute("fill", dark ? cc.dark : cc.light);
-  }
+  el.setAttribute("fill", fills[s] || fills.todo);
   el.setAttribute("stroke", dark ? "#0a0e1a" : "#1a2040");
   el.setAttribute("stroke-width", 0.5);
   if (filterStagger) {
@@ -988,13 +965,7 @@ function renderFloatingCountry(id) {
   const SVG = 150;
   const s    = allData[id]?.status || null;
   const dark = document.body.classList.contains("dark");
-  let fill;
-  if (s) {
-    fill = (floatFill[s] || floatFill.todo)[dark ? "dark" : "light"];
-  } else {
-    const cc = countryColor(id);
-    fill = dark ? cc.darkFloat : cc.lightFloat;
-  }
+  const fill = (floatFill[s || "todo"] || floatFill.todo)[dark ? "dark" : "light"];
 
   floatEl.innerHTML = `
     <svg viewBox="${viewBox}" width="${SVG}" height="${SVG}" xmlns="http://www.w3.org/2000/svg">
