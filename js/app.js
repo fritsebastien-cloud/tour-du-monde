@@ -1663,6 +1663,14 @@ const suggestLoad  = document.getElementById("suggest-loading");
 const suggestErr   = document.getElementById("suggest-error");
 let suggestCountry = null;
 
+function getTreatedCountries() {
+  const names = [];
+  for (const [id, entry] of Object.entries(allData)) {
+    if (entry.status && entry.status !== "todo" && entry.name) names.push(entry.name);
+  }
+  return names;
+}
+
 async function fetchSuggestions(countryName) {
   suggestCountry = countryName;
   suggestList.innerHTML = "";
@@ -1674,7 +1682,7 @@ async function fetchSuggestions(countryName) {
     const resp = await fetch("/api/suggest", {
       method: "POST",
       headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ country: countryName }),
+      body: JSON.stringify({ country: countryName, treated: getTreatedCountries() }),
     });
     const data = await resp.json();
     suggestLoad.classList.add("hidden");
@@ -1689,10 +1697,18 @@ async function fetchSuggestions(countryName) {
     data.artists.forEach((a, i) => {
       const card = document.createElement("div");
       card.className = "suggest-card";
+      const note = a.note ? `<div class="suggest-note">${esc(a.note)}</div>` : "";
       card.innerHTML =
-        `<div class="suggest-artist">${esc(a.artist)}</div>` +
-        `<div class="suggest-genre">${esc(a.genre)}</div>` +
-        `<div class="suggest-story">${esc(a.story)}</div>`;
+        `<div class="suggest-head-row">` +
+          `<div class="suggest-artist">${esc(a.artist)}</div>` +
+          `<div class="suggest-tag">${esc(a.tag)}</div>` +
+        `</div>` +
+        `<div class="suggest-pitch">${esc(a.pitch)}</div>` +
+        `<div class="suggest-section"><span class="suggest-label">La scène</span>${esc(a.scene)}</div>` +
+        `<div class="suggest-section"><span class="suggest-label">L'écart</span>${esc(a.ecart)}</div>` +
+        `<div class="suggest-section suggest-meta"><span class="suggest-label">À vérifier</span>${esc(a.verify)}</div>` +
+        `<div class="suggest-section suggest-meta"><span class="suggest-label">Matière</span>${esc(a.material)}</div>` +
+        note;
       suggestList.appendChild(card);
     });
   } catch (e) {
