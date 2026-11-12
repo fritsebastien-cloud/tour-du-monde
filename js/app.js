@@ -400,8 +400,8 @@ async function loadMap() {
         .attr("data-name", name)
         .attr("class", "country")
         .attr("fill", mapFill.todo)
-        .attr("stroke", isDark ? "#0a0e1a" : "#1a2040")
-        .attr("stroke-width", 0.5)
+        .attr("stroke", isDark ? "#0a0e1a" : "#1a2848")
+        .attr("stroke-width", 0.3)
         .on("mouseenter", function(event) {
           showTooltip(event, id, name);
           const s = allData[id]?.status || null;
@@ -434,8 +434,8 @@ async function loadMap() {
         .attr("data-id", id).attr("data-name", name)
         .attr("class", "country microstate")
         .attr("fill", mapFill.todo)
-        .attr("stroke", isDark ? "#0a0e1a" : "#1a2040")
-        .attr("stroke-width", 0.5)
+        .attr("stroke", isDark ? "#0a0e1a" : "#1a2848")
+        .attr("stroke-width", 0.3)
         .on("mouseenter", function(event) {
           showTooltip(event, id, name);
           const s = allData[id]?.status || null;
@@ -553,8 +553,8 @@ function applyColorToEl(el, id) {
   const dark = document.body.classList.contains("dark");
   const fills = dark ? mapFillDark : mapFill;
   el.setAttribute("fill", fills[s] || fills.todo);
-  el.setAttribute("stroke", dark ? "#0a0e1a" : "#1a2040");
-  el.setAttribute("stroke-width", 0.5);
+  el.setAttribute("stroke", dark ? "#0a0e1a" : "#1a2848");
+  el.setAttribute("stroke-width", 0.3);
   if (filterStagger) {
     const delay = Math.random() * 180;
     el.style.transitionDelay = `${delay}ms`;
@@ -848,8 +848,8 @@ function openPanel(id, name) {
   const sDark = document.body.classList.contains("dark");
   document.querySelectorAll(".country.selected").forEach(el => {
     el.classList.remove("selected");
-    el.setAttribute("stroke", sDark ? "#0a0e1a" : "#1a2040");
-    el.setAttribute("stroke-width", 0.5);
+    el.setAttribute("stroke", sDark ? "#0a0e1a" : "#1a2848");
+    el.setAttribute("stroke-width", 0.3);
   });
   const selStatus = allData[id]?.status || null;
   document.querySelectorAll(`[data-id="${id}"]`).forEach(el => {
@@ -983,8 +983,8 @@ function closePanel() {
   const cpDark = document.body.classList.contains("dark");
   document.querySelectorAll(".country.selected").forEach(el => {
     el.classList.remove("selected");
-    el.setAttribute("stroke", cpDark ? "#0a0e1a" : "#1a2040");
-    el.setAttribute("stroke-width", 0.5);
+    el.setAttribute("stroke", cpDark ? "#0a0e1a" : "#1a2848");
+    el.setAttribute("stroke-width", 0.3);
   });
   panel.classList.add("hidden"); overlay.classList.add("hidden");
   selectedId = null; applyColors();
