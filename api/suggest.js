@@ -91,7 +91,12 @@ Réponds UNIQUEMENT en JSON valide, sans markdown, sans backticks. 3 candidats m
 
   let artists;
   try {
-    artists = JSON.parse(text);
+    const parsed = JSON.parse(text);
+    if (Array.isArray(parsed)) artists = parsed;
+    else if (parsed.candidats) artists = parsed.candidats;
+    else if (parsed.candidates) artists = parsed.candidates;
+    else if (parsed.artists) artists = parsed.artists;
+    else artists = Object.values(parsed).find(v => Array.isArray(v)) || [];
   } catch {
     artists = [];
   }
