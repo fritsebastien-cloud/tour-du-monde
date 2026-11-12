@@ -204,8 +204,8 @@ body.dark .sr-item:hover { background: rgba(255,255,255,0.06); }
 
 /* ── MAP ───────────────────────────────────────────────────────────────────── */
 main { flex: 1; position: relative; overflow: hidden; }
-#map-wrapper { width: 100%; height: 100%; position: relative; background: #ffffff; }
-body.dark #map-wrapper { background: #060811; }
+#map-wrapper { width: 100%; height: 100%; position: relative; background: #3b5ec0; }
+body.dark #map-wrapper { background: #0c1240; }
 #map-svg {
   width: 100%; height: 100%; display: block; cursor: grab; background: transparent;
 }
@@ -291,9 +291,9 @@ body:not(.dark) .map-sweep {
 /* Vignette cinématique */
 .map-vignette {
   position: absolute; inset: 0; pointer-events: none; z-index: 2;
-  opacity: 0;
+  opacity: 0.5;
   background: radial-gradient(ellipse 110% 100% at 50% 50%,
-    transparent 30%, rgba(6,8,17,0.45) 75%, rgba(6,8,17,0.75) 100%);
+    transparent 30%, rgba(8,12,48,0.35) 75%, rgba(8,12,48,0.6) 100%);
   transition: opacity 0.4s;
 }
 body.dark .map-vignette { opacity: 1; }
@@ -310,8 +310,9 @@ body.dark .map-grain { opacity: 0.045; }
 
 /* Pays */
 .country {
-  stroke: transparent;
-  stroke-width: 0;
+  stroke: #1a2040;
+  stroke-width: 0.5;
+  stroke-linejoin: round;
   cursor: pointer;
   transition: fill 0.14s ease, stroke 0.2s ease, stroke-width 0.2s ease;
 }
@@ -319,14 +320,14 @@ body.dark .map-grain { opacity: 0.045; }
 
 /* Graticule */
 .graticule-line {
-  stroke: rgba(0,0,0,0.09);
+  stroke: rgba(255,255,255,0.08);
   transition: stroke 0.4s;
 }
-body.dark .graticule-line { stroke: rgba(255,255,255,0.06); }
+body.dark .graticule-line { stroke: rgba(255,255,255,0.05); }
 
 /* Élévation au survol */
-.country.hovered { filter: drop-shadow(0 4px 16px rgba(0,0,0,0.42)); }
-body:not(.dark) .country.hovered { filter: drop-shadow(0 3px 12px rgba(0,60,120,0.22)); }
+.country.hovered { filter: drop-shadow(0 2px 8px rgba(0,0,0,0.6)); }
+body:not(.dark) .country.hovered { filter: drop-shadow(0 2px 6px rgba(0,20,60,0.35)); }
 
 /* Pulse rings (pays "done") */
 @keyframes pulse-ring {

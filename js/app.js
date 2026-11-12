@@ -101,6 +101,26 @@ const mapStrokeDark = {
   done:     "#3ddc5a"
 };
 
+// ── Palette pixel-art : couleur unique par pays (golden ratio) ────────────────
+const _countryColorCache = {};
+function countryColor(id) {
+  if (_countryColorCache[id]) return _countryColorCache[id];
+  const n = parseInt(id, 10);
+  const h = ((n * 0.618033988749895) % 1) * 360;
+  const s1 = 55 + ((n * 7) % 30);          // 55-84 %
+  const lDark  = 38 + ((n * 13) % 18);     // 38-55 %
+  const lLight = 55 + ((n * 11) % 18);     // 55-72 %
+  _countryColorCache[id] = {
+    dark:      `hsl(${h}, ${s1}%, ${lDark}%)`,
+    light:     `hsl(${h}, ${s1}%, ${lLight}%)`,
+    darkHover: `hsl(${h}, ${s1 + 8}%, ${lDark + 8}%)`,
+    lightHover:`hsl(${h}, ${s1 + 8}%, ${lLight - 8}%)`,
+    darkFloat: `hsl(${h}, ${s1}%, ${lDark + 5}%)`,
+    lightFloat:`hsl(${h}, ${s1}%, ${lLight - 5}%)`,
+  };
+  return _countryColorCache[id];
+}
+
 // Continents pour le drawer
 const CONTINENT = {
   // Afrique
@@ -380,25 +400,34 @@ async function loadMap() {
         .attr("data-name", name)
         .attr("class", "country")
         .attr("fill", mapFill.todo)
+        .attr("stroke", isDark ? "#0a0e1a" : "#1a2040")
+        .attr("stroke-width", 0.5)
         .on("mouseenter", function(event) {
           showTooltip(event, id, name);
           const s = allData[id]?.status || null;
           const dark = document.body.classList.contains("dark");
           const hovers  = dark ? mapHoverDark  : mapHover;
           const strokes = dark ? mapStrokeDark : mapStroke;
-          d3mod.selectAll(`[data-id="${id}"]`)
-            .attr("fill", hovers[s]  || hovers.todo)
-            .attr("stroke", strokes[s] || strokes.todo)
-            .attr("stroke-width", 1.2)
-            .classed("hovered", true);
+          if (s) {
+            d3mod.selectAll(`[data-id="${id}"]`)
+              .attr("fill", hovers[s])
+              .attr("stroke", strokes[s])
+              .attr("stroke-width", 1.2)
+              .classed("hovered", true);
+          } else {
+            const cc = countryColor(id);
+            d3mod.selectAll(`[data-id="${id}"]`)
+              .attr("fill", dark ? cc.darkHover : cc.lightHover)
+              .attr("stroke", dark ? "#1a2848" : "#2a3860")
+              .attr("stroke-width", 1.2)
+              .classed("hovered", true);
+          }
         })
         .on("mousemove", moveTooltip)
         .on("mouseleave", () => {
           hideTooltip();
           applyColorById(id);
-          d3mod.selectAll(`[data-id="${id}"]`)
-            .attr("stroke", "transparent").attr("stroke-width", 0)
-            .classed("hovered", false);
+          d3mod.selectAll(`[data-id="${id}"]`).classed("hovered", false);
         })
         .on("click", () => openPanel(id, name))
         .on("contextmenu", function(event) { showCtxMenu(event, id, name); });
@@ -414,25 +443,34 @@ async function loadMap() {
         .attr("data-id", id).attr("data-name", name)
         .attr("class", "country microstate")
         .attr("fill", mapFill.todo)
+        .attr("stroke", isDark ? "#0a0e1a" : "#1a2040")
+        .attr("stroke-width", 0.5)
         .on("mouseenter", function(event) {
           showTooltip(event, id, name);
           const s = allData[id]?.status || null;
           const dark = document.body.classList.contains("dark");
           const hovers  = dark ? mapHoverDark  : mapHover;
           const strokes = dark ? mapStrokeDark : mapStroke;
-          d3mod.selectAll(`[data-id="${id}"]`)
-            .attr("fill", hovers[s]  || hovers.todo)
-            .attr("stroke", strokes[s] || strokes.todo)
-            .attr("stroke-width", 1.2)
-            .classed("hovered", true);
+          if (s) {
+            d3mod.selectAll(`[data-id="${id}"]`)
+              .attr("fill", hovers[s])
+              .attr("stroke", strokes[s])
+              .attr("stroke-width", 1.2)
+              .classed("hovered", true);
+          } else {
+            const cc = countryColor(id);
+            d3mod.selectAll(`[data-id="${id}"]`)
+              .attr("fill", dark ? cc.darkHover : cc.lightHover)
+              .attr("stroke", dark ? "#1a2848" : "#2a3860")
+              .attr("stroke-width", 1.2)
+              .classed("hovered", true);
+          }
         })
         .on("mousemove", moveTooltip)
         .on("mouseleave", () => {
           hideTooltip();
           applyColorById(id);
-          d3mod.selectAll(`[data-id="${id}"]`)
-            .attr("stroke", "transparent").attr("stroke-width", 0)
-            .classed("hovered", false);
+          d3mod.selectAll(`[data-id="${id}"]`).classed("hovered", false);
         })
         .on("click", () => openPanel(id, name))
         .on("contextmenu", function(event) { showCtxMenu(event, id, name); });
@@ -532,7 +570,14 @@ function applyColorToEl(el, id) {
   const filtered = !activeFilters.has(effectiveStatus);
   const dark = document.body.classList.contains("dark");
   const fills = dark ? mapFillDark : mapFill;
-  el.setAttribute("fill", fills[s] || fills.todo);
+  if (s) {
+    el.setAttribute("fill", fills[s]);
+  } else {
+    const cc = countryColor(id);
+    el.setAttribute("fill", dark ? cc.dark : cc.light);
+  }
+  el.setAttribute("stroke", dark ? "#0a0e1a" : "#1a2040");
+  el.setAttribute("stroke-width", 0.5);
   if (filterStagger) {
     const delay = Math.random() * 180;
     el.style.transitionDelay = `${delay}ms`;
@@ -691,15 +736,21 @@ function updatePanelStatusDot(status) {
 }
 
 function getFiches(entry) {
-  if (entry.fiches && Array.isArray(entry.fiches) && entry.fiches.length > 0) {
-    return entry.fiches.map(f => ({
+  let arr = entry.fiches;
+  if (arr && !Array.isArray(arr) && typeof arr === "object") {
+    arr = Object.keys(arr).sort((a, b) => +a - +b).map(k => arr[k]);
+  }
+  if (arr && Array.isArray(arr) && arr.length > 0) {
+    return arr.filter(f => f != null).map(f => ({
       artist: f.artist || "", category: f.category || "",
-      note: f.note || "", links: f.links || [], artistPhoto: f.artistPhoto || ""
+      note: f.note || "", links: Array.isArray(f.links) ? f.links : (f.links ? Object.values(f.links) : []),
+      artistPhoto: f.artistPhoto || ""
     }));
   }
   return [{
     artist: entry.artist || "", category: entry.category || "",
-    note: entry.note || "", links: entry.links || [], artistPhoto: entry.artistPhoto || ""
+    note: entry.note || "", links: Array.isArray(entry.links) ? entry.links : (entry.links ? Object.values(entry.links) : []),
+    artistPhoto: entry.artistPhoto || ""
   }];
 }
 
@@ -783,6 +834,7 @@ function addFiche() {
   currentFicheIdx = currentFiches.length - 1;
   loadFiche(currentFicheIdx);
   renderFicheTabs();
+  autoSave();
 }
 
 function deleteFiche(idx) {
@@ -793,6 +845,7 @@ function deleteFiche(idx) {
   if (currentFicheIdx === idx) loadFiche(currentFicheIdx);
   else if (currentFicheIdx > idx) currentFicheIdx--;
   renderFicheTabs();
+  autoSave();
 }
 
 function openPanel(id, name) {
@@ -815,10 +868,11 @@ function openPanel(id, name) {
         { day: "numeric", month: "long", hour: "2-digit", minute: "2-digit" })
     : "";
 
+  const sDark = document.body.classList.contains("dark");
   document.querySelectorAll(".country.selected").forEach(el => {
     el.classList.remove("selected");
-    el.setAttribute("stroke", "transparent");
-    el.setAttribute("stroke-width", 0);
+    el.setAttribute("stroke", sDark ? "#0a0e1a" : "#1a2040");
+    el.setAttribute("stroke-width", 0.5);
   });
   const selStatus = allData[id]?.status || null;
   document.querySelectorAll(`[data-id="${id}"]`).forEach(el => {
@@ -853,7 +907,7 @@ function autoSave() {
     note:        f0.note || "",
     links:       f0.links || [],
     artistPhoto: f0.artistPhoto || null,
-    fiches:      currentFiches.length > 1 ? currentFiches : null,
+    fiches:      currentFiches.length > 1 ? currentFiches.map(f => ({...f, links: f.links && f.links.length ? [...f.links] : null})) : null,
     editedAt:    Date.now(),
     name:        selectedName
   };
@@ -934,8 +988,13 @@ function renderFloatingCountry(id) {
   const SVG = 150;
   const s    = allData[id]?.status || null;
   const dark = document.body.classList.contains("dark");
-  const fill = (floatFill[s || "todo"] || floatFill.todo)[dark ? "dark" : "light"];
-  const rgb  = (glowRGB[s || "todo"] || glowRGB.todo)[dark ? "dark" : "light"];
+  let fill;
+  if (s) {
+    fill = (floatFill[s] || floatFill.todo)[dark ? "dark" : "light"];
+  } else {
+    const cc = countryColor(id);
+    fill = dark ? cc.darkFloat : cc.lightFloat;
+  }
 
   floatEl.innerHTML = `
     <svg viewBox="${viewBox}" width="${SVG}" height="${SVG}" xmlns="http://www.w3.org/2000/svg">
@@ -950,10 +1009,11 @@ function renderFloatingCountry(id) {
 function closePanel() {
   autoSave();
   document.getElementById("country-shape-area").classList.remove("loaded");
+  const cpDark = document.body.classList.contains("dark");
   document.querySelectorAll(".country.selected").forEach(el => {
     el.classList.remove("selected");
-    el.setAttribute("stroke", "transparent");
-    el.setAttribute("stroke-width", 0);
+    el.setAttribute("stroke", cpDark ? "#0a0e1a" : "#1a2040");
+    el.setAttribute("stroke-width", 0.5);
   });
   panel.classList.add("hidden"); overlay.classList.add("hidden");
   selectedId = null; applyColors();
