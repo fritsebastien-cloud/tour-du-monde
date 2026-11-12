@@ -208,16 +208,18 @@ main { flex: 1; position: relative; overflow: hidden; }
 body.dark #map-wrapper { background: #0c1240; }
 #map-svg {
   width: 100%; height: 100%; display: block; cursor: grab; background: transparent;
+  shape-rendering: crispEdges;
 }
 body.dark #map-svg { background: transparent; }
 #map-svg:active { cursor: grabbing; }
 
 /* ── AMBIENT MAP EFFECTS ── */
 
-/* Orbes lumineux qui dérivent lentement */
+/* Orbes lumineux — désactivés pour le style pixel art */
 .map-orb {
   position: absolute; z-index: 0; border-radius: 50%;
   pointer-events: none; will-change: transform;
+  display: none;
 }
 .orb-1 {
   width: 60%; height: 55%; top: -15%; left: -10%;
@@ -246,9 +248,10 @@ body:not(.dark) .orb-2 {
   100% { transform: translate(-30%, -35%); }
 }
 
-/* Reflet diagonal qui glisse sur la carte toutes les ~14s */
+/* Reflet diagonal — désactivé pour le style pixel art */
 .map-sweep {
   position: absolute; inset: -20%; z-index: 1; pointer-events: none;
+  display: none;
   background: linear-gradient(
     112deg,
     transparent 38%,
@@ -285,18 +288,18 @@ body:not(.dark) .map-sweep {
   45%  { filter: brightness(1.32) saturate(0.85); }
   100% { filter: brightness(1) saturate(1); }
 }
-.country { transition: opacity 0.3s; }
-.country:hover { animation: countryGlint 0.8s ease 0.35s both; }
+.country { transition: opacity 0.3s, fill 0.08s step-end; }
+.country:hover { animation: none; }
 
 /* Vignette cinématique */
 .map-vignette {
   position: absolute; inset: 0; pointer-events: none; z-index: 2;
-  opacity: 0.5;
+  opacity: 0;
   background: radial-gradient(ellipse 110% 100% at 50% 50%,
-    transparent 30%, rgba(8,12,48,0.35) 75%, rgba(8,12,48,0.6) 100%);
+    transparent 40%, rgba(4,6,24,0.3) 80%, rgba(4,6,24,0.55) 100%);
   transition: opacity 0.4s;
 }
-body.dark .map-vignette { opacity: 1; }
+body.dark .map-vignette { opacity: 0.7; }
 
 /* Texture grain */
 .map-grain {
@@ -306,28 +309,29 @@ body.dark .map-vignette { opacity: 1; }
   mix-blend-mode: overlay;
   transition: opacity 0.4s;
 }
-body.dark .map-grain { opacity: 0.045; }
+body.dark .map-grain { opacity: 0; }
 
 /* Pays */
 .country {
-  stroke: #1a2040;
-  stroke-width: 0.5;
-  stroke-linejoin: round;
+  stroke: #0a0e1a;
+  stroke-width: 0.8;
+  stroke-linejoin: miter;
   cursor: pointer;
   transition: fill 0.14s ease, stroke 0.2s ease, stroke-width 0.2s ease;
 }
+body:not(.dark) .country { stroke: #1a2040; }
 .country.selected { stroke-width: 1.4 !important; }
 
-/* Graticule */
+/* Graticule — masquée pour le style pixel art */
 .graticule-line {
-  stroke: rgba(255,255,255,0.08);
+  stroke: transparent;
   transition: stroke 0.4s;
 }
-body.dark .graticule-line { stroke: rgba(255,255,255,0.05); }
+body.dark .graticule-line { stroke: transparent; }
 
 /* Élévation au survol */
-.country.hovered { filter: drop-shadow(0 2px 8px rgba(0,0,0,0.6)); }
-body:not(.dark) .country.hovered { filter: drop-shadow(0 2px 6px rgba(0,20,60,0.35)); }
+.country.hovered { filter: drop-shadow(1px 1px 0 rgba(255,255,255,0.15)); }
+body:not(.dark) .country.hovered { filter: drop-shadow(1px 1px 0 rgba(0,0,0,0.2)); }
 
 /* Pulse rings (pays "done") */
 @keyframes pulse-ring {

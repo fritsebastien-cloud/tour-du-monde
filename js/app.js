@@ -80,14 +80,14 @@ const mapHover = {
 };
 // Couleurs pour le mode sombre cinématique
 const mapFillDark = {
-  todo:     "#1C2840",
+  todo:     "#2a3d5e",
   wip:      "#c04848",
   script:   "#b89030",
   launched: "#2890b8",
   done:     "#28a050"
 };
 const mapHoverDark = {
-  todo:     "#283858",
+  todo:     "#344a6e",
   wip:      "#d85858",
   script:   "#c8a038",
   launched: "#38a0c8",
