@@ -57,7 +57,7 @@ const statusColor = {
 
 // Couleur du trait au survol (version sombre du fill selon statut)
 const mapStroke = {
-  todo:     "#2a3a58",
+  todo:     "#3a2010",
   wip:      "#d04848",
   script:   "#c8a030",
   launched: "#2898c0",
@@ -65,14 +65,14 @@ const mapStroke = {
 };
 
 const mapFill = {
-  todo:     "#c8ccd8",
+  todo:     "#c8b8a0",
   wip:      "#ff9a9a",
   script:   "#ffe4a0",
   launched: "#90ddf5",
   done:     "#7ae890"
 };
 const mapHover = {
-  todo:     "#b0b8c8",
+  todo:     "#d8c8a8",
   wip:      "#ff8080",
   script:   "#ffd878",
   launched: "#70d0f0",
@@ -80,46 +80,26 @@ const mapHover = {
 };
 // Couleurs pour le mode sombre cinématique
 const mapFillDark = {
-  todo:     "#2a3d5e",
+  todo:     "#3a2218",
   wip:      "#c04848",
   script:   "#b89030",
   launched: "#2890b8",
   done:     "#28a050"
 };
 const mapHoverDark = {
-  todo:     "#344a6e",
+  todo:     "#4a3020",
   wip:      "#d85858",
   script:   "#c8a038",
   launched: "#38a0c8",
   done:     "#38b860"
 };
 const mapStrokeDark = {
-  todo:     "#3a5070",
+  todo:     "#5a3820",
   wip:      "#ff6b6b",
   script:   "#ffd166",
   launched: "#4cc9f0",
   done:     "#3ddc5a"
 };
-
-// ── Palette pixel-art : couleur unique par pays (golden ratio) ────────────────
-const _countryColorCache = {};
-function countryColor(id) {
-  if (_countryColorCache[id]) return _countryColorCache[id];
-  const n = parseInt(id, 10);
-  const h = ((n * 0.618033988749895) % 1) * 360;
-  const s1 = 55 + ((n * 7) % 30);          // 55-84 %
-  const lDark  = 38 + ((n * 13) % 18);     // 38-55 %
-  const lLight = 55 + ((n * 11) % 18);     // 55-72 %
-  _countryColorCache[id] = {
-    dark:      `hsl(${h}, ${s1}%, ${lDark}%)`,
-    light:     `hsl(${h}, ${s1}%, ${lLight}%)`,
-    darkHover: `hsl(${h}, ${s1 + 8}%, ${lDark + 8}%)`,
-    lightHover:`hsl(${h}, ${s1 + 8}%, ${lLight - 8}%)`,
-    darkFloat: `hsl(${h}, ${s1}%, ${lDark + 5}%)`,
-    lightFloat:`hsl(${h}, ${s1}%, ${lLight - 5}%)`,
-  };
-  return _countryColorCache[id];
-}
 
 // Continents pour le drawer
 const CONTINENT = {
@@ -400,7 +380,7 @@ async function loadMap() {
         .attr("data-name", name)
         .attr("class", "country")
         .attr("fill", mapFill.todo)
-        .attr("stroke", isDark ? "#0a0e1a" : "#1a2848")
+        .attr("stroke", isDark ? "#1a0800" : "#2a1005")
         .attr("stroke-width", 0.3)
         .on("mouseenter", function(event) {
           showTooltip(event, id, name);
@@ -434,7 +414,7 @@ async function loadMap() {
         .attr("data-id", id).attr("data-name", name)
         .attr("class", "country microstate")
         .attr("fill", mapFill.todo)
-        .attr("stroke", isDark ? "#0a0e1a" : "#1a2848")
+        .attr("stroke", isDark ? "#1a0800" : "#2a1005")
         .attr("stroke-width", 0.3)
         .on("mouseenter", function(event) {
           showTooltip(event, id, name);
@@ -553,7 +533,7 @@ function applyColorToEl(el, id) {
   const dark = document.body.classList.contains("dark");
   const fills = dark ? mapFillDark : mapFill;
   el.setAttribute("fill", fills[s] || fills.todo);
-  el.setAttribute("stroke", dark ? "#0a0e1a" : "#1a2848");
+  el.setAttribute("stroke", dark ? "#1a0800" : "#2a1005");
   el.setAttribute("stroke-width", 0.3);
   if (filterStagger) {
     const delay = Math.random() * 180;
@@ -848,7 +828,7 @@ function openPanel(id, name) {
   const sDark = document.body.classList.contains("dark");
   document.querySelectorAll(".country.selected").forEach(el => {
     el.classList.remove("selected");
-    el.setAttribute("stroke", sDark ? "#0a0e1a" : "#1a2848");
+    el.setAttribute("stroke", sDark ? "#1a0800" : "#2a1005");
     el.setAttribute("stroke-width", 0.3);
   });
   const selStatus = allData[id]?.status || null;
@@ -895,7 +875,7 @@ function autoSave() {
 
 // ── Pays flottant 3D ──────────────────────────────────────────────────────────
 const glowRGB = {
-  todo:     { dark: "28,40,64",    light: "28,40,64"    },
+  todo:     { dark: "58,34,20",    light: "58,34,20"    },
   wip:      { dark: "255,107,107", light: "208,72,72"   },
   script:   { dark: "255,209,102", light: "200,160,48"  },
   launched: { dark: "76,201,240",  light: "40,144,192"  },
@@ -904,7 +884,7 @@ const glowRGB = {
 
 // Couleurs de fill dédiées au float — toujours visibles quel que soit le thème
 const floatFill = {
-  todo:     { dark: "#4a6090", light: "#1C2840" },
+  todo:     { dark: "#5a3828", light: "#3a2010" },
   wip:      { dark: "#ff6b6b", light: "#c04848" },
   script:   { dark: "#ffd166", light: "#b89030" },
   launched: { dark: "#4cc9f0", light: "#2890b8" },
@@ -983,7 +963,7 @@ function closePanel() {
   const cpDark = document.body.classList.contains("dark");
   document.querySelectorAll(".country.selected").forEach(el => {
     el.classList.remove("selected");
-    el.setAttribute("stroke", cpDark ? "#0a0e1a" : "#1a2848");
+    el.setAttribute("stroke", cpDark ? "#1a0800" : "#2a1005");
     el.setAttribute("stroke-width", 0.3);
   });
   panel.classList.add("hidden"); overlay.classList.add("hidden");
@@ -1221,7 +1201,7 @@ function renderDrawer() {
     }));
 }
 
-function initApp() { listenToData(); listenToOrder(); loadMap(); initWaterCaustics(); }
+function initApp() { listenToData(); listenToOrder(); loadMap(); }
 
 // ── Compteur animé ────────────────────────────────────────────────────────────
 function animateCounter(el, to, suffix) {
@@ -1676,53 +1656,3 @@ document.getElementById("sort-save").addEventListener("click", () => {
   }
 })();
 
-// ── Caustiques eau (canvas) ──────────────────────────────────────────────────
-function initWaterCaustics() {
-  const canvas = document.getElementById("water-canvas");
-  if (!canvas) return;
-  const ctx = canvas.getContext("2d");
-  let W, H, time = 0, raf;
-
-  function resize() {
-    const r = canvas.parentElement.getBoundingClientRect();
-    W = canvas.width  = Math.round(r.width / 4);
-    H = canvas.height = Math.round(r.height / 4);
-  }
-  resize();
-  window.addEventListener("resize", resize);
-
-  function wave(x, y, t, fx, fy, sp) {
-    return Math.sin(x * fx + y * fy + t * sp);
-  }
-
-  function draw() {
-    time += 0.018;
-    const img = ctx.createImageData(W, H);
-    const d = img.data;
-    for (let py = 0; py < H; py++) {
-      for (let px = 0; px < W; px++) {
-        const x = px, y = py, t = time;
-        const w1 = wave(x,y,t, 0.06, 0.04, 0.9);
-        const w2 = wave(x,y,t, -0.04, 0.055, -0.7);
-        const w3 = wave(x,y,t, 0.05, -0.035, 1.1);
-        const w4 = wave(x,y,t, -0.03, -0.06, -0.8);
-        const w5 = wave(x,y,t, 0.045, 0.05, 0.6);
-        const s1 = w1 + w2 + w3;
-        const s2 = w2 + w3 + w4;
-        const s3 = w3 + w4 + w5;
-        const v = Math.abs(s1) + Math.abs(s2) + Math.abs(s3);
-        const n = 1.0 - Math.min(1, v * 0.22);
-        const bright = Math.pow(n, 5) * 4.5;
-        const c = Math.min(255, Math.round(bright * 255));
-        const i = (py * W + px) * 4;
-        d[i]     = Math.round(c * 0.55);
-        d[i + 1] = Math.round(c * 0.85);
-        d[i + 2] = c;
-        d[i + 3] = c;
-      }
-    }
-    ctx.putImageData(img, 0, 0);
-    raf = requestAnimationFrame(draw);
-  }
-  draw();
-}
