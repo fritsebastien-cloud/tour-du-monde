@@ -1221,7 +1221,7 @@ function renderDrawer() {
     }));
 }
 
-function initApp() { listenToData(); listenToOrder(); loadMap(); }
+function initApp() { listenToData(); listenToOrder(); loadMap(); initWaterCaustics(); }
 
 // ── Compteur animé ────────────────────────────────────────────────────────────
 function animateCounter(el, to, suffix) {
@@ -1675,3 +1675,54 @@ document.getElementById("sort-save").addEventListener("click", () => {
     mThemeBtn.querySelector(".m-icon-moon").style.display = dark ? "" : "none";
   }
 })();
+
+// ── Caustiques eau (canvas) ──────────────────────────────────────────────────
+function initWaterCaustics() {
+  const canvas = document.getElementById("water-canvas");
+  if (!canvas) return;
+  const ctx = canvas.getContext("2d");
+  let W, H, time = 0, raf;
+
+  function resize() {
+    const r = canvas.parentElement.getBoundingClientRect();
+    W = canvas.width  = Math.round(r.width / 4);
+    H = canvas.height = Math.round(r.height / 4);
+  }
+  resize();
+  window.addEventListener("resize", resize);
+
+  function wave(x, y, t, fx, fy, sp) {
+    return Math.sin(x * fx + y * fy + t * sp);
+  }
+
+  function draw() {
+    time += 0.018;
+    const img = ctx.createImageData(W, H);
+    const d = img.data;
+    for (let py = 0; py < H; py++) {
+      for (let px = 0; px < W; px++) {
+        const x = px, y = py, t = time;
+        const w1 = wave(x,y,t, 0.06, 0.04, 0.9);
+        const w2 = wave(x,y,t, -0.04, 0.055, -0.7);
+        const w3 = wave(x,y,t, 0.05, -0.035, 1.1);
+        const w4 = wave(x,y,t, -0.03, -0.06, -0.8);
+        const w5 = wave(x,y,t, 0.045, 0.05, 0.6);
+        const s1 = w1 + w2 + w3;
+        const s2 = w2 + w3 + w4;
+        const s3 = w3 + w4 + w5;
+        const v = Math.abs(s1) + Math.abs(s2) + Math.abs(s3);
+        const n = 1.0 - Math.min(1, v * 0.22);
+        const bright = Math.pow(n, 5) * 4.5;
+        const c = Math.min(255, Math.round(bright * 255));
+        const i = (py * W + px) * 4;
+        d[i]     = Math.round(c * 0.55);
+        d[i + 1] = Math.round(c * 0.85);
+        d[i + 2] = c;
+        d[i + 3] = c;
+      }
+    }
+    ctx.putImageData(img, 0, 0);
+    raf = requestAnimationFrame(draw);
+  }
+  draw();
+}

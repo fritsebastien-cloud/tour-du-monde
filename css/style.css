@@ -211,11 +211,14 @@ main { flex: 1; position: relative; overflow: hidden; }
 }
 body.dark #map-wrapper { background: #0c1240; }
 
-/* Texture eau animée (caustiques piscine) — SVG inline pour feTurbulence */
+/* Texture eau animée (caustiques piscine) */
 .water-caustics {
   position: absolute; inset: 0; z-index: 0; pointer-events: none;
+  width: 100%; height: 100%;
+  mix-blend-mode: screen;
+  opacity: 0.55;
 }
-.water-caustics svg { width: 100%; height: 100%; display: block; }
+body.dark .water-caustics { opacity: 0.4; }
 #map-svg {
   width: 100%; height: 100%; display: block; cursor: grab; background: transparent;
   shape-rendering: crispEdges;
