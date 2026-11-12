@@ -211,54 +211,11 @@ main { flex: 1; position: relative; overflow: hidden; }
 }
 body.dark #map-wrapper { background: #0c1240; }
 
-/* Texture eau animée (caustiques piscine) */
+/* Texture eau animée (caustiques piscine) — SVG inline pour feTurbulence */
 .water-caustics {
   position: absolute; inset: 0; z-index: 0; pointer-events: none;
-  opacity: 0.18;
-  background:
-    radial-gradient(ellipse 60% 50% at 30% 40%, rgba(120,200,255,0.5), transparent 70%),
-    radial-gradient(ellipse 50% 60% at 70% 60%, rgba(100,180,255,0.4), transparent 70%),
-    radial-gradient(ellipse 40% 40% at 50% 30%, rgba(140,220,255,0.3), transparent 60%);
-  background-size: 200% 200%, 180% 180%, 160% 160%;
-  animation: caustics1 8s ease-in-out infinite alternate, caustics2 12s ease-in-out infinite alternate;
-  mix-blend-mode: screen;
 }
-.water-caustics::before {
-  content: ''; position: absolute; inset: 0;
-  background:
-    radial-gradient(ellipse 55% 45% at 60% 55%, rgba(80,170,255,0.45), transparent 65%),
-    radial-gradient(ellipse 45% 55% at 35% 45%, rgba(100,200,255,0.35), transparent 60%);
-  background-size: 220% 220%, 190% 190%;
-  animation: caustics3 10s ease-in-out infinite alternate;
-  mix-blend-mode: screen;
-}
-.water-caustics::after {
-  content: ''; position: absolute; inset: 0;
-  background:
-    radial-gradient(ellipse 50% 50% at 45% 50%, rgba(150,230,255,0.3), transparent 55%),
-    radial-gradient(ellipse 35% 45% at 65% 35%, rgba(90,180,255,0.3), transparent 55%);
-  background-size: 250% 250%, 200% 200%;
-  animation: caustics4 14s ease-in-out infinite alternate;
-  mix-blend-mode: screen;
-}
-body.dark .water-caustics { opacity: 0.12; }
-
-@keyframes caustics1 {
-  0%   { background-position: 0% 0%, 100% 100%, 50% 0%; }
-  100% { background-position: 100% 100%, 0% 0%, 0% 100%; }
-}
-@keyframes caustics2 {
-  0%   { transform: scale(1) rotate(0deg); }
-  100% { transform: scale(1.08) rotate(3deg); }
-}
-@keyframes caustics3 {
-  0%   { background-position: 100% 0%, 0% 100%; }
-  100% { background-position: 0% 100%, 100% 0%; }
-}
-@keyframes caustics4 {
-  0%   { background-position: 50% 0%, 0% 50%; opacity: 0.8; }
-  100% { background-position: 0% 100%, 100% 0%; opacity: 1; }
-}
+.water-caustics svg { width: 100%; height: 100%; display: block; }
 #map-svg {
   width: 100%; height: 100%; display: block; cursor: grab; background: transparent;
   shape-rendering: crispEdges;
