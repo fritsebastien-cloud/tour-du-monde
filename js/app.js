@@ -957,6 +957,7 @@ function renderFloatingCountry(id) {
 }
 
 function closePanel() {
+  closeSuggestPanel();
   autoSave();
   document.getElementById("country-shape-area").classList.remove("loaded");
   const cpDark = document.body.classList.contains("dark");
@@ -1654,4 +1655,76 @@ document.getElementById("sort-save").addEventListener("click", () => {
     mThemeBtn.querySelector(".m-icon-moon").style.display = dark ? "" : "none";
   }
 })();
+
+// ── SUGGESTIONS CLAUDE ─────────────────────────────────────────────────────
+const suggestPanel = document.getElementById("suggest-panel");
+const suggestList  = document.getElementById("suggest-list");
+const suggestLoad  = document.getElementById("suggest-loading");
+const suggestErr   = document.getElementById("suggest-error");
+let suggestCountry = null;
+
+async function fetchSuggestions(countryName) {
+  suggestCountry = countryName;
+  suggestList.innerHTML = "";
+  suggestErr.classList.add("hidden");
+  suggestLoad.classList.remove("hidden");
+  document.getElementById("suggest-reload").disabled = true;
+
+  try {
+    const resp = await fetch("/api/suggest", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ country: countryName }),
+    });
+    const data = await resp.json();
+    suggestLoad.classList.add("hidden");
+    document.getElementById("suggest-reload").disabled = false;
+
+    if (!resp.ok || !data.artists || !data.artists.length) {
+      suggestErr.textContent = data.error || "Aucun résultat trouvé.";
+      suggestErr.classList.remove("hidden");
+      return;
+    }
+
+    data.artists.forEach((a, i) => {
+      const card = document.createElement("div");
+      card.className = "suggest-card";
+      card.innerHTML =
+        `<div class="suggest-artist">${esc(a.artist)}</div>` +
+        `<div class="suggest-genre">${esc(a.genre)}</div>` +
+        `<div class="suggest-story">${esc(a.story)}</div>`;
+      suggestList.appendChild(card);
+    });
+  } catch (e) {
+    suggestLoad.classList.add("hidden");
+    document.getElementById("suggest-reload").disabled = false;
+    suggestErr.textContent = "Erreur de connexion.";
+    suggestErr.classList.remove("hidden");
+  }
+}
+
+function esc(s) {
+  const d = document.createElement("div");
+  d.textContent = s || "";
+  return d.innerHTML;
+}
+
+function openSuggestPanel() {
+  if (!selectedName) return;
+  suggestPanel.classList.remove("hidden");
+  document.body.classList.add("suggest-open");
+  fetchSuggestions(selectedName);
+}
+
+function closeSuggestPanel() {
+  suggestPanel.classList.add("hidden");
+  document.body.classList.remove("suggest-open");
+}
+
+document.getElementById("suggest-btn").addEventListener("click", openSuggestPanel);
+document.getElementById("suggest-close").addEventListener("click", closeSuggestPanel);
+document.getElementById("suggest-reload").addEventListener("click", () => {
+  if (suggestCountry) fetchSuggestions(suggestCountry);
+});
+
 
