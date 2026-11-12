@@ -1,3 +1,22 @@
+const MODELS = ["gemini-3.8-flash", "gemini-3.1-flash-lite"];
+
+async function tryModel(model, apiKey, prompt) {
+  const url = `https://generativelanguage.googleapis.com/v1beta/models/${model}:generateContent?key=${apiKey}`;
+  const resp = await fetch(url, {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify({
+      contents: [{ parts: [{ text: prompt }] }],
+      generationConfig: { temperature: 1.0, maxOutputTokens: 2048 },
+    }),
+  });
+  if (!resp.ok) {
+    const err = await resp.text();
+    throw new Error(`${model}: ${resp.status} - ${err}`);
+  }
+  return resp.json();
+}
+
 export default async function handler(req, res) {
   if (req.method !== "POST") return res.status(405).json({ error: "POST only" });
 
@@ -19,37 +38,28 @@ Privilégie les artistes peu connus en France, les histoires surprenantes, les d
 Réponds UNIQUEMENT en JSON valide, sans markdown, sans backticks :
 [{"artist":"...","genre":"...","story":"..."},...]`;
 
-  try {
-    const url = `https://generativelanguage.googleapis.com/v1beta/models/gemini-2.0-flash:generateContent?key=${apiKey}`;
-    const resp = await fetch(url, {
-      method: "POST",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({
-        contents: [{ parts: [{ text: prompt }] }],
-        generationConfig: { temperature: 1.0, maxOutputTokens: 2048 },
-      }),
-    });
-
-    if (!resp.ok) {
-      const err = await resp.text();
-      return res.status(502).json({ error: "Gemini API error", detail: err });
-    }
-
-    const data = await resp.json();
-    let text = data.candidates?.[0]?.content?.parts?.[0]?.text || "[]";
-
-    // Strip markdown fences if present
-    text = text.replace(/^```(?:json)?\s*/i, "").replace(/\s*```\s*$/, "").trim();
-
-    let artists;
+  let data;
+  let lastErr;
+  for (const model of MODELS) {
     try {
-      artists = JSON.parse(text);
-    } catch {
-      artists = [];
+      data = await tryModel(model, apiKey, prompt);
+      break;
+    } catch (e) {
+      lastErr = e.message;
     }
-
-    return res.status(200).json({ artists });
-  } catch (e) {
-    return res.status(500).json({ error: e.message });
   }
+
+  if (!data) return res.status(502).json({ error: "All models failed", detail: lastErr });
+
+  let text = data.candidates?.[0]?.content?.parts?.[0]?.text || "[]";
+  text = text.replace(/^```(?:json)?\s*/i, "").replace(/\s*```\s*$/, "").trim();
+
+  let artists;
+  try {
+    artists = JSON.parse(text);
+  } catch {
+    artists = [];
+  }
+
+  return res.status(200).json({ artists });
 }
