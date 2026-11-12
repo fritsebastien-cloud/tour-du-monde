@@ -840,6 +840,7 @@ function openPanel(id, name) {
   overlay.classList.remove("hidden");
   applyColors();
   renderFloatingCountry(id);
+  refreshSuggestIfOpen();
 }
 
 function autoSave() {
@@ -1662,6 +1663,7 @@ const suggestList  = document.getElementById("suggest-list");
 const suggestLoad  = document.getElementById("suggest-loading");
 const suggestErr   = document.getElementById("suggest-error");
 let suggestCountry = null;
+let suggestRequestId = 0;
 
 function getTreatedCountries() {
   const names = [];
@@ -1673,6 +1675,7 @@ function getTreatedCountries() {
 
 async function fetchSuggestions(countryName) {
   suggestCountry = countryName;
+  const reqId = ++suggestRequestId;
   suggestList.innerHTML = "";
   suggestErr.classList.add("hidden");
   suggestLoad.classList.remove("hidden");
@@ -1684,6 +1687,7 @@ async function fetchSuggestions(countryName) {
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify({ country: countryName, treated: getTreatedCountries() }),
     });
+    if (reqId !== suggestRequestId) return;
     const data = await resp.json();
     suggestLoad.classList.add("hidden");
     document.getElementById("suggest-reload").disabled = false;
@@ -1730,6 +1734,12 @@ function openSuggestPanel() {
   suggestPanel.classList.remove("hidden");
   document.body.classList.add("suggest-open");
   fetchSuggestions(selectedName);
+}
+
+function refreshSuggestIfOpen() {
+  if (!suggestPanel.classList.contains("hidden") && selectedName && selectedName !== suggestCountry) {
+    fetchSuggestions(selectedName);
+  }
 }
 
 function closeSuggestPanel() {
