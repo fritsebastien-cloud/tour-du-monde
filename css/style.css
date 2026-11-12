@@ -211,21 +211,19 @@ main { flex: 1; position: relative; overflow: hidden; }
 }
 body:not(.dark) #map-wrapper { background: #2a0e04; }
 
-/* Fond feu */
+/* Halo chaud subtil — intégré dans la mer */
 .fire-bg {
   position: absolute; inset: 0; z-index: 0; pointer-events: none;
   background:
-    radial-gradient(ellipse 80% 60% at 50% 100%, rgba(255,80,0,0.35), transparent 60%),
-    radial-gradient(ellipse 60% 50% at 30% 90%, rgba(255,40,0,0.25), transparent 55%),
-    radial-gradient(ellipse 50% 40% at 70% 95%, rgba(255,120,0,0.2), transparent 50%),
-    radial-gradient(ellipse 90% 30% at 50% 85%, rgba(200,30,0,0.15), transparent 50%);
+    radial-gradient(ellipse 90% 40% at 50% 100%, rgba(255,100,20,0.12), transparent 60%),
+    radial-gradient(ellipse 70% 35% at 35% 95%, rgba(255,60,0,0.07), transparent 50%),
+    radial-gradient(ellipse 60% 30% at 65% 95%, rgba(255,130,30,0.06), transparent 45%);
 }
 body:not(.dark) .fire-bg {
   background:
-    radial-gradient(ellipse 80% 60% at 50% 100%, rgba(255,80,0,0.4), transparent 60%),
-    radial-gradient(ellipse 60% 50% at 30% 90%, rgba(255,40,0,0.3), transparent 55%),
-    radial-gradient(ellipse 50% 40% at 70% 95%, rgba(255,120,0,0.25), transparent 50%),
-    radial-gradient(ellipse 90% 30% at 50% 85%, rgba(200,30,0,0.2), transparent 50%);
+    radial-gradient(ellipse 90% 40% at 50% 100%, rgba(255,100,20,0.15), transparent 60%),
+    radial-gradient(ellipse 70% 35% at 35% 95%, rgba(255,60,0,0.09), transparent 50%),
+    radial-gradient(ellipse 60% 30% at 65% 95%, rgba(255,130,30,0.07), transparent 45%);
 }
 #map-svg {
   width: 100%; height: 100%; display: block; cursor: grab; background: transparent;
@@ -334,13 +332,13 @@ body.dark .map-grain { opacity: 0; }
 
 /* Pays */
 .country {
-  stroke: #1a0800;
+  stroke: #1a0c04;
   stroke-width: 0.3;
   stroke-linejoin: miter;
   cursor: pointer;
   transition: fill 0.14s ease, stroke 0.2s ease, stroke-width 0.2s ease;
 }
-body:not(.dark) .country { stroke: #2a1005; }
+body:not(.dark) .country { stroke: #2a1808; }
 .country.selected { stroke-width: 1.4 !important; }
 
 /* Graticule — masquée pour le style pixel art */

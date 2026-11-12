@@ -58,47 +58,46 @@ const statusColor = {
 // Couleur du trait au survol (version sombre du fill selon statut)
 const mapStroke = {
   todo:     "#3a2010",
-  wip:      "#d04848",
-  script:   "#c8a030",
-  launched: "#2898c0",
-  done:     "#28a848"
+  wip:      "#c04050",
+  script:   "#b89830",
+  launched: "#2880a8",
+  done:     "#209048"
 };
 
 const mapFill = {
   todo:     "#c8b8a0",
-  wip:      "#ff9a9a",
-  script:   "#ffe4a0",
-  launched: "#90ddf5",
-  done:     "#7ae890"
+  wip:      "#ffa0a0",
+  script:   "#ffe4a8",
+  launched: "#98ddf8",
+  done:     "#80e898"
 };
 const mapHover = {
   todo:     "#d8c8a8",
-  wip:      "#ff8080",
-  script:   "#ffd878",
-  launched: "#70d0f0",
-  done:     "#58d878"
+  wip:      "#ff8888",
+  script:   "#ffd880",
+  launched: "#78d0f0",
+  done:     "#60d880"
 };
-// Couleurs pour le mode sombre cinématique
 const mapFillDark = {
   todo:     "#3a2218",
-  wip:      "#c04848",
-  script:   "#b89030",
-  launched: "#2890b8",
-  done:     "#28a050"
+  wip:      "#a03840",
+  script:   "#988028",
+  launched: "#206898",
+  done:     "#208840"
 };
 const mapHoverDark = {
   todo:     "#4a3020",
-  wip:      "#d85858",
-  script:   "#c8a038",
-  launched: "#38a0c8",
-  done:     "#38b860"
+  wip:      "#b84850",
+  script:   "#a89030",
+  launched: "#2878a8",
+  done:     "#28a050"
 };
 const mapStrokeDark = {
   todo:     "#5a3820",
-  wip:      "#ff6b6b",
-  script:   "#ffd166",
-  launched: "#4cc9f0",
-  done:     "#3ddc5a"
+  wip:      "#e06070",
+  script:   "#d0b050",
+  launched: "#3898c0",
+  done:     "#30b058"
 };
 
 // Continents pour le drawer
@@ -380,7 +379,7 @@ async function loadMap() {
         .attr("data-name", name)
         .attr("class", "country")
         .attr("fill", mapFill.todo)
-        .attr("stroke", isDark ? "#1a0800" : "#2a1005")
+        .attr("stroke", isDark ? "#1a0c04" : "#2a1808")
         .attr("stroke-width", 0.3)
         .on("mouseenter", function(event) {
           showTooltip(event, id, name);
@@ -414,7 +413,7 @@ async function loadMap() {
         .attr("data-id", id).attr("data-name", name)
         .attr("class", "country microstate")
         .attr("fill", mapFill.todo)
-        .attr("stroke", isDark ? "#1a0800" : "#2a1005")
+        .attr("stroke", isDark ? "#1a0c04" : "#2a1808")
         .attr("stroke-width", 0.3)
         .on("mouseenter", function(event) {
           showTooltip(event, id, name);
@@ -533,7 +532,7 @@ function applyColorToEl(el, id) {
   const dark = document.body.classList.contains("dark");
   const fills = dark ? mapFillDark : mapFill;
   el.setAttribute("fill", fills[s] || fills.todo);
-  el.setAttribute("stroke", dark ? "#1a0800" : "#2a1005");
+  el.setAttribute("stroke", dark ? "#1a0c04" : "#2a1808");
   el.setAttribute("stroke-width", 0.3);
   if (filterStagger) {
     const delay = Math.random() * 180;
@@ -828,7 +827,7 @@ function openPanel(id, name) {
   const sDark = document.body.classList.contains("dark");
   document.querySelectorAll(".country.selected").forEach(el => {
     el.classList.remove("selected");
-    el.setAttribute("stroke", sDark ? "#1a0800" : "#2a1005");
+    el.setAttribute("stroke", sDark ? "#1a0c04" : "#2a1808");
     el.setAttribute("stroke-width", 0.3);
   });
   const selStatus = allData[id]?.status || null;
@@ -876,19 +875,19 @@ function autoSave() {
 // ── Pays flottant 3D ──────────────────────────────────────────────────────────
 const glowRGB = {
   todo:     { dark: "58,34,20",    light: "58,34,20"    },
-  wip:      { dark: "255,107,107", light: "208,72,72"   },
-  script:   { dark: "255,209,102", light: "200,160,48"  },
-  launched: { dark: "76,201,240",  light: "40,144,192"  },
-  done:     { dark: "61,220,90",   light: "40,168,72"   },
+  wip:      { dark: "224,96,112",  light: "192,64,80"   },
+  script:   { dark: "208,176,80",  light: "152,128,40"  },
+  launched: { dark: "56,152,192",  light: "32,104,152"  },
+  done:     { dark: "48,176,88",   light: "32,136,64"   },
 };
 
 // Couleurs de fill dédiées au float — toujours visibles quel que soit le thème
 const floatFill = {
   todo:     { dark: "#5a3828", light: "#3a2010" },
-  wip:      { dark: "#ff6b6b", light: "#c04848" },
-  script:   { dark: "#ffd166", light: "#b89030" },
-  launched: { dark: "#4cc9f0", light: "#2890b8" },
-  done:     { dark: "#3ddc5a", light: "#28a050" },
+  wip:      { dark: "#b84850", light: "#a03840" },
+  script:   { dark: "#a89030", light: "#988028" },
+  launched: { dark: "#2878a8", light: "#206898" },
+  done:     { dark: "#28a050", light: "#208840" },
 };
 
 // Polygone dominant par surface géographique réelle (d3.geoArea, pas besoin de projection)
@@ -963,7 +962,7 @@ function closePanel() {
   const cpDark = document.body.classList.contains("dark");
   document.querySelectorAll(".country.selected").forEach(el => {
     el.classList.remove("selected");
-    el.setAttribute("stroke", cpDark ? "#1a0800" : "#2a1005");
+    el.setAttribute("stroke", cpDark ? "#1a0c04" : "#2a1808");
     el.setAttribute("stroke-width", 0.3);
   });
   panel.classList.add("hidden"); overlay.classList.add("hidden");
